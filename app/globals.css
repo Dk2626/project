@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-dark font-body antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+
+  /* Type scale from the design system panel */
+  .h1 {
+    @apply font-heading font-bold text-[40px] leading-[48px];
+  }
+  .h2 {
+    @apply font-heading font-semibold text-[32px] leading-[40px];
+  }
+  .h3 {
+    @apply font-heading font-semibold text-[24px] leading-[32px];
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-[1200px] px-6;
+  }
+}

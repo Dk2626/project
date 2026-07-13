@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600" role="img" aria-label="Placeholder portrait">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EFF6FF"/>
+      <stop offset="0.55" stop-color="#DBEAFE"/>
+      <stop offset="1" stop-color="#FEF3C7"/>
+    </linearGradient>
+    <linearGradient id="fig" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="480" height="600" fill="url(#bg)"/>
+
+  <!-- soft decorative blobs -->
+  <circle cx="70" cy="90" r="120" fill="#2563EB" opacity="0.06"/>
+  <circle cx="420" cy="520" r="150" fill="#2563EB" opacity="0.05"/>
+
+  <!-- figure: head + shoulders silhouette -->
+  <g transform="translate(240 250)">
+    <circle cx="0" cy="-40" r="78" fill="url(#fig)" opacity="0.85"/>
+    <path d="M-150 250 C-150 120 -80 70 0 70 C80 70 150 120 150 250 Z" fill="url(#fig)" opacity="0.85"/>
+  </g>
+
+  <!-- laptop hint -->
+  <g transform="translate(240 470)" fill="#0F172A" opacity="0.18">
+    <rect x="-90" y="-6" width="180" height="12" rx="3"/>
+    <rect x="-72" y="-56" width="144" height="52" rx="4"/>
+  </g>
+
+  <!-- label -->
+  <g transform="translate(240 560)" text-anchor="middle" fill="#1E3A8A" opacity="0.7"
+     font-family="'Poppins','Segoe UI',sans-serif">
+    <text y="0" font-size="20" font-weight="700" letter-spacing="0.5">Placeholder Image</text>
+    <text y="24" font-size="13" font-weight="500" opacity="0.75">Replace with a real portrait</text>
+  </g>
+</svg>
