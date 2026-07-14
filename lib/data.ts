@@ -96,21 +96,55 @@ export const jobs: Job[] = [
   },
 ];
 
-export const footerColumns = [
+export interface FooterLink {
+  label: string;
+  href: string;
+}
+
+export interface FooterColumn {
+  heading: string;
+  links: FooterLink[];
+}
+
+export const footerColumns: FooterColumn[] = [
   {
     heading: "Quick Links",
-    links: ["Home", "About Us", "Services", "Webinars", "Jobs", "Blog", "Contact"],
+    links: [
+      { label: "Home", href: "/" },
+      { label: "About Us", href: "/about" },
+      { label: "Services", href: "/services" },
+      { label: "Webinars", href: "/webinars" },
+      { label: "Jobs", href: "/jobs" },
+      { label: "Blog", href: "/blog" },
+      { label: "Contact", href: "/contact" },
+    ],
   },
   {
     heading: "For Students",
-    links: ["Dashboard", "Webinars", "Jobs", "Certificates", "Profile"],
+    links: [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Webinars", href: "/webinars" },
+      { label: "Jobs", href: "/jobs" },
+      { label: "Certificates", href: "/dashboard" },
+      { label: "Profile", href: "/dashboard" },
+    ],
   },
   {
     heading: "For Recruiters",
-    links: ["Dashboard", "Post a Job", "Candidates", "Interviews"],
+    links: [
+      { label: "Dashboard", href: "/admin" },
+      { label: "Post a Job", href: "/admin/jobs" },
+      { label: "Candidates", href: "/admin/students" },
+      { label: "Interviews", href: "/admin/applications" },
+    ],
   },
   {
     heading: "Company",
-    links: ["About Us", "Careers", "Privacy Policy", "Terms of Service"],
+    links: [
+      { label: "About Us", href: "/about" },
+      { label: "Careers", href: "/careers" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+    ],
   },
 ];

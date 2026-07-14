@@ -31,13 +31,14 @@ export function Hero() {
         <div className="relative mx-auto w-full max-w-md">
           <div className="aspect-[4/5] w-full overflow-hidden rounded-2xl bg-primary-light shadow-lg">
             {/*
-              Dummy placeholder for now. To use a real photo, drop it in
-              /public (e.g. /public/hero.jpg) and change src below to "/hero.jpg".
+              To swap in a different photo, drop it in /public and update src.
+              A .jpg fallback (hero-students.jpg) is also available if needed.
             */}
             <img
-              src="/placeholders/portrait.svg"
-              alt="URAV learner — placeholder"
+              src="/hero-students.webp"
+              alt="Two students walking together on campus"
               className="h-full w-full object-cover"
+              style={{ objectPosition: "center 30%" }}
             />
           </div>
 
