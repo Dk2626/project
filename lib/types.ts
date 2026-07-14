@@ -33,6 +33,34 @@ export interface WebinarItem {
   createdAt?: string;
 }
 
+export interface StudentRecord {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  dob?: string;
+  gender?: string;
+  studentType?: "School Student" | "College Student";
+  // College
+  college?: string;
+  degree?: string;
+  department?: string;
+  currentYear?: string;
+  // School
+  schoolName?: string;
+  classGrade?: string;
+  board?: string;
+  schoolStream?: string;
+  // Shared
+  graduationYear?: string;
+  cgpa?: string;
+  linkedin?: string;
+  github?: string;
+  resumeUrl?: string;
+  createdAt?: string;
+}
+
 export interface ApplicationItem {
   _id: string;
   kind: "job" | "webinar";

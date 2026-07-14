@@ -8,19 +8,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // URAV Design System tokens
+        // URAV Design System tokens — brand navy from the logo
         primary: {
-          DEFAULT: "#2563EB",
-          hover: "#1D4ED8",
-          light: "#EFF6FF",
+          DEFAULT: "#0B3E77",
+          hover: "#082C57",
+          light: "#E9F0F9",
         },
-        secondary: "#64748B",
+        secondary: "#5A6B82",
         success: "#22C55E",
         warning: "#F59E0B",
         danger: "#EF4444",
-        light: "#F8FAFC",
-        dark: "#0F172A",
-        muted: "#64748B",
+        light: "#F5F8FC",
+        dark: "#0A2540",
+        muted: "#5A6B82",
       },
       fontFamily: {
         heading: ["var(--font-poppins)", "sans-serif"],

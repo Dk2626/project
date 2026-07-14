@@ -23,10 +23,22 @@ const userSchema = new Schema(
     },
 
     // Education
+    studentType: {
+      type: String,
+      enum: ["School Student", "College Student"],
+      default: "College Student",
+    },
+    // College fields
     college: { type: String, trim: true },
     degree: { type: String },
     department: { type: String, trim: true },
     currentYear: { type: String },
+    // School fields
+    schoolName: { type: String, trim: true },
+    classGrade: { type: String },
+    board: { type: String },
+    schoolStream: { type: String },
+    // Shared
     graduationYear: { type: String },
     cgpa: { type: String },
 

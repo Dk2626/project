@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { GraduationCap, Twitter, Linkedin, Facebook, Instagram } from "lucide-react";
+import { Twitter, Linkedin, Facebook, Instagram } from "lucide-react";
 import { footerColumns } from "@/lib/data";
+import { Logo } from "@/components/Logo";
 
 const socials = [
   { icon: Twitter, label: "Twitter", href: "#" },
@@ -17,9 +18,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-white">
-                <GraduationCap className="h-5 w-5" />
-              </span>
+              <Logo size={34} variant="white" />
               <span className="font-heading text-xl font-bold text-white">URAV</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-slate-400">

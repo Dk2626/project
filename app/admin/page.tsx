@@ -26,7 +26,7 @@ export default function AdminOverview() {
   }, []);
 
   const cards = [
-    { label: "Students", value: stats?.students, icon: GraduationCap, href: "/admin/applications" },
+    { label: "Students", value: stats?.students, icon: GraduationCap, href: "/admin/students" },
     { label: "Jobs Posted", value: stats?.jobs, icon: Briefcase, href: "/admin/jobs" },
     { label: "Webinars", value: stats?.webinars, icon: Video, href: "/admin/webinars" },
     {

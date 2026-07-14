@@ -8,14 +8,16 @@ import {
   Briefcase,
   Video,
   Users,
-  LogOut,
   GraduationCap,
+  LogOut,
   ExternalLink,
 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { useAuth } from "@/components/AuthProvider";
 
 const nav = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/admin/students", label: "Students", icon: GraduationCap },
   { href: "/admin/jobs", label: "Jobs", icon: Briefcase },
   { href: "/admin/webinars", label: "Webinars", icon: Video },
   { href: "/admin/applications", label: "Applications", icon: Users },
@@ -51,9 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="border-b border-slate-200 bg-white lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between p-5">
           <Link href="/" className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-white">
-              <GraduationCap className="h-5 w-5" />
-            </span>
+            <Logo size={32} />
             <span className="font-heading text-lg font-bold text-dark">URAV Admin</span>
           </Link>
         </div>

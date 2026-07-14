@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Menu, X, LayoutDashboard, LogOut, Shield } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut, Shield } from "lucide-react";
 import { navLinks } from "@/lib/data";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/Logo";
 import { useAuth } from "@/components/AuthProvider";
 
 export function Navbar() {
@@ -24,9 +25,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur">
       <nav className="container-page flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-white">
-            <GraduationCap className="h-5 w-5" />
-          </span>
+          <Logo size={34} />
           <span className="font-heading text-xl font-bold text-dark">URAV</span>
         </Link>
 

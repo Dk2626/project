@@ -4,7 +4,6 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  GraduationCap,
   Mail,
   Lock,
   Eye,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 import { api, ApiError } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
+import { Logo } from "@/components/Logo";
 import type { AuthUser } from "@/lib/types";
 
 const highlights = [
@@ -71,9 +71,7 @@ function LoginForm() {
         <aside className="relative hidden flex-col justify-between bg-gradient-to-b from-primary-light to-white p-8 lg:col-span-5 lg:flex xl:p-10">
           <div>
             <Link href="/" className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary text-white shadow-md">
-                <GraduationCap className="h-6 w-6" />
-              </span>
+              <Logo size={44} />
               <span className="leading-tight">
                 <span className="block font-heading text-2xl font-bold text-dark">URAV</span>
                 <span className="block text-[10px] font-medium uppercase tracking-[0.25em] text-slate-400">
@@ -118,9 +116,7 @@ function LoginForm() {
         {/* Right form */}
         <section className="p-6 sm:p-8 lg:col-span-7 xl:p-10">
           <Link href="/" className="mb-6 flex items-center gap-2 lg:hidden">
-            <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-white">
-              <GraduationCap className="h-5 w-5" />
-            </span>
+            <Logo size={32} />
             <span className="font-heading text-xl font-bold text-dark">URAV</span>
           </Link>
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
+import { Logo } from "@/components/Logo";
 import type { AuthUser } from "@/lib/types";
 import {
   GraduationCap,
@@ -163,10 +164,19 @@ export default function RegisterPage() {
     gender: "",
     password: "",
     confirmPassword: "",
+    // Education
+    studentType: "College Student",
+    // College fields
     college: "",
     degree: "",
     department: "",
     currentYear: "",
+    // School fields
+    schoolName: "",
+    classGrade: "",
+    board: "",
+    schoolStream: "",
+    // Shared
     graduationYear: "",
     cgpa: "",
     linkedin: "",
@@ -188,7 +198,8 @@ export default function RegisterPage() {
   const set = (key: keyof typeof form) => (v: string) =>
     setForm((f) => ({ ...f, [key]: v }));
 
-  const gradYears = Array.from({ length: 8 }, (_, i) => `${2024 + i}`);
+  const gradYears = Array.from({ length: 10 }, (_, i) => `${2022 + i}`);
+  const isSchool = form.studentType === "School Student";
 
   function validate() {
     const e: Record<string, string> = {};
@@ -203,12 +214,21 @@ export default function RegisterPage() {
     else if (form.password.length < 8) e.password = "Use at least 8 characters";
     if (!form.confirmPassword) e.confirmPassword = "Please confirm your password";
     else if (form.confirmPassword !== form.password) e.confirmPassword = "Passwords do not match";
-    if (!form.college.trim()) e.college = "College / University is required";
-    if (!form.degree) e.degree = "Please select a degree";
-    if (!form.department.trim()) e.department = "Department is required";
-    if (!form.currentYear) e.currentYear = "Select your current year";
-    if (!form.graduationYear) e.graduationYear = "Select graduation year";
-    if (!form.cgpa.trim()) e.cgpa = "CGPA / Percentage is required";
+    if (!form.studentType) e.studentType = "Select whether you're a school or college student";
+    if (isSchool) {
+      if (!form.schoolName.trim()) e.schoolName = "School name is required";
+      if (!form.classGrade) e.classGrade = "Select your class / grade";
+      if (!form.board) e.board = "Please select a board";
+      if (!form.graduationYear) e.graduationYear = "Select completion year";
+      if (!form.cgpa.trim()) e.cgpa = "Percentage / Grade is required";
+    } else {
+      if (!form.college.trim()) e.college = "College / University is required";
+      if (!form.degree) e.degree = "Please select a degree";
+      if (!form.department.trim()) e.department = "Department is required";
+      if (!form.currentYear) e.currentYear = "Select your current year";
+      if (!form.graduationYear) e.graduationYear = "Select graduation year";
+      if (!form.cgpa.trim()) e.cgpa = "CGPA / Percentage is required";
+    }
     if (!agreed) e.agreed = "Please accept the Terms of Service and Privacy Policy";
     return e;
   }
@@ -221,9 +241,24 @@ export default function RegisterPage() {
 
     setSubmitting(true);
     try {
+      // Only keep the education fields relevant to the chosen student type,
+      // so each record stays clean.
+      const payload: Record<string, string> = { ...form };
+      if (isSchool) {
+        payload.college = "";
+        payload.degree = "";
+        payload.department = "";
+        payload.currentYear = "";
+      } else {
+        payload.schoolName = "";
+        payload.classGrade = "";
+        payload.board = "";
+        payload.schoolStream = "";
+      }
+
       // Multipart so the resume PDF can be uploaded to S3 on the server.
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      Object.entries(payload).forEach(([k, v]) => fd.append(k, v));
       if (resumeFile) fd.append("resume", resumeFile);
 
       const data = await api<{ user: AuthUser }>("/api/auth/register", {
@@ -280,9 +315,7 @@ export default function RegisterPage() {
           <div>
             {/* logo */}
             <Link href="/" className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary text-white shadow-md">
-                <GraduationCap className="h-6 w-6" />
-              </span>
+              <Logo size={46} />
               <span className="leading-tight">
                 <span className="block font-heading text-2xl font-bold text-dark">URAV</span>
                 <span className="block text-[10px] font-medium uppercase tracking-[0.25em] text-slate-400">
@@ -342,9 +375,7 @@ export default function RegisterPage() {
         <section className="p-6 sm:p-8 lg:col-span-7 xl:p-10">
           {/* compact brand for small screens */}
           <Link href="/" className="mb-6 flex items-center gap-2 lg:hidden">
-            <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-white">
-              <GraduationCap className="h-5 w-5" />
-            </span>
+            <Logo size={32} />
             <span className="font-heading text-xl font-bold text-dark">URAV</span>
           </Link>
 
@@ -521,70 +552,168 @@ export default function RegisterPage() {
 
           {/* Education Information */}
           <SectionTitle>Education Information</SectionTitle>
+
+          {/* Student type toggle — decides which education fields to show */}
+          <div className="mb-5">
+            <Label htmlFor="studentType" required>
+              I am a
+            </Label>
+            <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+              {["School Student", "College Student"].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => set("studentType")(t)}
+                  aria-pressed={form.studentType === t}
+                  className={`h-11 rounded-md border text-sm font-medium transition-colors ${
+                    form.studentType === t
+                      ? "border-primary bg-primary-light text-primary"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-primary/40"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            {errors.studentType && (
+              <p className="mt-1 text-xs text-danger">{errors.studentType}</p>
+            )}
+          </div>
+
           <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Field
-              id="college"
-              label="College / University"
-              required
-              placeholder="Enter college or university"
-              icon={<Building2 className={iconSm} />}
-              value={form.college}
-              onChange={(e) => set("college")(e.target.value)}
-              error={errors.college}
-            />
-            <SelectField
-              id="degree"
-              label="Degree"
-              required
-              icon={<GraduationCap className={iconSm} />}
-              placeholder="Select your degree"
-              value={form.degree}
-              onChange={set("degree")}
-              options={["B.E / B.Tech", "B.Sc", "B.Com", "B.A", "BBA", "BCA", "M.E / M.Tech", "M.Sc", "MBA", "MCA", "Other"]}
-              error={errors.degree}
-            />
-            <Field
-              id="department"
-              label="Department / Stream"
-              required
-              placeholder="Enter department"
-              icon={<BookOpen className={iconSm} />}
-              value={form.department}
-              onChange={(e) => set("department")(e.target.value)}
-              error={errors.department}
-            />
-            <SelectField
-              id="currentYear"
-              label="Current Year"
-              required
-              icon={<Calendar className={iconSm} />}
-              placeholder="Select current year"
-              value={form.currentYear}
-              onChange={set("currentYear")}
-              options={["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Graduated"]}
-              error={errors.currentYear}
-            />
-            <SelectField
-              id="graduationYear"
-              label="Graduation Year"
-              required
-              icon={<Calendar className={iconSm} />}
-              placeholder="Select graduation year"
-              value={form.graduationYear}
-              onChange={set("graduationYear")}
-              options={gradYears}
-              error={errors.graduationYear}
-            />
-            <Field
-              id="cgpa"
-              label="CGPA / Percentage"
-              required
-              placeholder="Enter CGPA or %"
-              icon={<Star className={iconSm} />}
-              value={form.cgpa}
-              onChange={(e) => set("cgpa")(e.target.value)}
-              error={errors.cgpa}
-            />
+            {isSchool ? (
+              <>
+                <Field
+                  id="schoolName"
+                  label="School Name"
+                  required
+                  placeholder="Enter your school name"
+                  icon={<Building2 className={iconSm} />}
+                  value={form.schoolName}
+                  onChange={(e) => set("schoolName")(e.target.value)}
+                  error={errors.schoolName}
+                />
+                <SelectField
+                  id="classGrade"
+                  label="Class / Grade"
+                  required
+                  icon={<GraduationCap className={iconSm} />}
+                  placeholder="Select class"
+                  value={form.classGrade}
+                  onChange={set("classGrade")}
+                  options={["6th", "7th", "8th", "9th", "10th", "11th", "12th"]}
+                  error={errors.classGrade}
+                />
+                <SelectField
+                  id="board"
+                  label="Board"
+                  required
+                  icon={<BookOpen className={iconSm} />}
+                  placeholder="Select board"
+                  value={form.board}
+                  onChange={set("board")}
+                  options={["CBSE", "ICSE", "State Board", "IB", "IGCSE", "NIOS", "Other"]}
+                  error={errors.board}
+                />
+                <SelectField
+                  id="schoolStream"
+                  label="Stream (11th / 12th)"
+                  icon={<BookOpen className={iconSm} />}
+                  placeholder="Select stream (optional)"
+                  value={form.schoolStream}
+                  onChange={set("schoolStream")}
+                  options={["Science", "Commerce", "Arts / Humanities", "Not applicable"]}
+                  error={errors.schoolStream}
+                />
+                <SelectField
+                  id="graduationYear"
+                  label="Completion Year"
+                  required
+                  icon={<Calendar className={iconSm} />}
+                  placeholder="Select completion year"
+                  value={form.graduationYear}
+                  onChange={set("graduationYear")}
+                  options={gradYears}
+                  error={errors.graduationYear}
+                />
+                <Field
+                  id="cgpa"
+                  label="Percentage / Grade"
+                  required
+                  placeholder="Enter % or grade"
+                  icon={<Star className={iconSm} />}
+                  value={form.cgpa}
+                  onChange={(e) => set("cgpa")(e.target.value)}
+                  error={errors.cgpa}
+                />
+              </>
+            ) : (
+              <>
+                <Field
+                  id="college"
+                  label="College / University"
+                  required
+                  placeholder="Enter college or university"
+                  icon={<Building2 className={iconSm} />}
+                  value={form.college}
+                  onChange={(e) => set("college")(e.target.value)}
+                  error={errors.college}
+                />
+                <SelectField
+                  id="degree"
+                  label="Degree"
+                  required
+                  icon={<GraduationCap className={iconSm} />}
+                  placeholder="Select your degree"
+                  value={form.degree}
+                  onChange={set("degree")}
+                  options={["B.E / B.Tech", "B.Sc", "B.Com", "B.A", "BBA", "BCA", "M.E / M.Tech", "M.Sc", "MBA", "MCA", "Other"]}
+                  error={errors.degree}
+                />
+                <Field
+                  id="department"
+                  label="Department / Stream"
+                  required
+                  placeholder="Enter department"
+                  icon={<BookOpen className={iconSm} />}
+                  value={form.department}
+                  onChange={(e) => set("department")(e.target.value)}
+                  error={errors.department}
+                />
+                <SelectField
+                  id="currentYear"
+                  label="Current Year"
+                  required
+                  icon={<Calendar className={iconSm} />}
+                  placeholder="Select current year"
+                  value={form.currentYear}
+                  onChange={set("currentYear")}
+                  options={["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Graduated"]}
+                  error={errors.currentYear}
+                />
+                <SelectField
+                  id="graduationYear"
+                  label="Graduation Year"
+                  required
+                  icon={<Calendar className={iconSm} />}
+                  placeholder="Select graduation year"
+                  value={form.graduationYear}
+                  onChange={set("graduationYear")}
+                  options={gradYears}
+                  error={errors.graduationYear}
+                />
+                <Field
+                  id="cgpa"
+                  label="CGPA / Percentage"
+                  required
+                  placeholder="Enter CGPA or %"
+                  icon={<Star className={iconSm} />}
+                  value={form.cgpa}
+                  onChange={(e) => set("cgpa")(e.target.value)}
+                  error={errors.cgpa}
+                />
+              </>
+            )}
           </div>
 
           {/* Additional Information */}
