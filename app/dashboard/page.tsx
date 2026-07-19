@@ -15,6 +15,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ProfileCard } from "@/components/ProfileCard";
 import { api } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { ApplicationItem } from "@/lib/types";
@@ -118,6 +119,16 @@ export default function DashboardPage() {
         </section>
 
         <section className="container-page py-8">
+          {/* My Profile */}
+          {user.role === "student" && (
+            <div className="mb-8">
+              <h2 className="mb-3 font-heading text-lg font-semibold text-dark">
+                My Profile
+              </h2>
+              <ProfileCard />
+            </div>
+          )}
+
           {/* Tabs */}
           <div className="mb-5 flex gap-2 rounded-lg border border-slate-200 bg-white p-1 sm:w-fit">
             <TabButton active={tab === "job"} onClick={() => setTab("job")}>
@@ -218,15 +229,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {user.role === "student" && (
-            <p className="mt-8 text-sm text-slate-500">
-              Want to update your resume?{" "}
-              <Link href="/register" className="text-primary hover:underline">
-                Contact support
-              </Link>{" "}
-              — resume management is coming soon.
-            </p>
-          )}
         </section>
       </main>
       <Footer />
