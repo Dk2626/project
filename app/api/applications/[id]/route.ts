@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { Application, ALL_STATUSES } from "@/models/Application";
-import { ok, fail, handle, serialize, requireUser, requireAdmin } from "@/lib/api";
+import { ok, fail, handle, serialize, requireUser } from "@/lib/api";
+import { Job } from "@/models/Job";
 import { isValidObjectId } from "mongoose";
 
 export const runtime = "nodejs";
@@ -8,10 +9,13 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: { id: string } };
 
-// Admin: update the status of an application.
+// Update the status of an application.
+// Admin: any application. Recruiter: only applications to their own jobs.
 export async function PUT(req: Request, { params }: Ctx) {
   return handle(async () => {
-    requireAdmin();
+    const session = requireUser();
+    if (session.role !== "admin" && session.role !== "recruiter")
+      return fail("You are not allowed to change an application status.", 403);
     if (!isValidObjectId(params.id)) return fail("Application not found.", 404);
     const { status, note } = await req.json();
 
@@ -19,6 +23,15 @@ export async function PUT(req: Request, { params }: Ctx) {
       return fail("That status is not valid.");
 
     await connectDB();
+
+    if (session.role === "recruiter") {
+      const existing: any = await Application.findById(params.id).lean();
+      if (!existing) return fail("Application not found.", 404);
+      const job: any = await Job.findById(existing.job).select("postedBy").lean();
+      if (!job || String(job.postedBy ?? "") !== session.id)
+        return fail("You can only manage applicants for your own jobs.", 403);
+    }
+
     const update: Record<string, any> = {};
     if (status) update.status = status;
     if (typeof note === "string") update.note = note;

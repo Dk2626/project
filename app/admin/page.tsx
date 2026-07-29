@@ -2,13 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Briefcase, Video, Users, FileText, GraduationCap, ArrowRight } from "lucide-react";
+import {
+  Briefcase,
+  Video,
+  Users,
+  FileText,
+  GraduationCap,
+  Building2,
+  Clock,
+  ArrowRight,
+} from "lucide-react";
 import { api } from "@/lib/client";
 
 interface Stats {
   students: number;
   jobs: number;
   webinars: number;
+  recruiters: number;
+  pendingRecruiters: number;
+  recruiterJobs: number;
   jobApplications: number;
   webinarApplications: number;
   totalApplications: number;
@@ -27,6 +39,7 @@ export default function AdminOverview() {
 
   const cards = [
     { label: "Students", value: stats?.students, icon: GraduationCap, href: "/admin/students" },
+    { label: "Recruiters", value: stats?.recruiters, icon: Building2, href: "/admin/recruiters" },
     { label: "Jobs Posted", value: stats?.jobs, icon: Briefcase, href: "/admin/jobs" },
     { label: "Webinars", value: stats?.webinars, icon: Video, href: "/admin/webinars" },
     {
@@ -44,7 +57,22 @@ export default function AdminOverview() {
         A snapshot of activity across the platform.
       </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {!loading && (stats?.pendingRecruiters ?? 0) > 0 && (
+        <Link
+          href="/admin/recruiters"
+          className="mt-5 flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm hover:bg-warning/15"
+        >
+          <Clock className="h-4 w-4 shrink-0 text-warning" />
+          <span className="text-slate-700">
+            {stats?.pendingRecruiters} recruiter
+            {stats?.pendingRecruiters === 1 ? "" : "s"} waiting for approval — review and grant
+            access.
+          </span>
+          <ArrowRight className="ml-auto h-4 w-4 text-warning" />
+        </Link>
+      )}
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map(({ label, value, icon: Icon, href }) => (
           <Link
             key={label}
@@ -83,6 +111,27 @@ export default function AdminOverview() {
             className="mt-4 inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover"
           >
             Manage jobs
+          </Link>
+        </div>
+
+        <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary-light text-primary">
+              <Building2 className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="font-heading font-semibold text-dark">Recruiter postings</p>
+              <p className="text-sm text-slate-500">
+                {loading ? "—" : stats?.recruiterJobs ?? 0} of {loading ? "—" : stats?.jobs ?? 0}{" "}
+                jobs posted by recruiters
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/recruiters"
+            className="mt-4 inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover"
+          >
+            Manage recruiters
           </Link>
         </div>
 

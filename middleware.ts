@@ -7,7 +7,7 @@ import { AUTH_COOKIE } from "@/lib/constants";
  * full verification + role checks in the API routes (nodejs runtime) and the
  * admin layout. This just avoids flashing protected pages to logged-out users.
  */
-const PROTECTED = ["/dashboard", "/admin"];
+const PROTECTED = ["/dashboard", "/admin", "/recruiter"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -27,5 +27,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/recruiter/:path*"],
 };

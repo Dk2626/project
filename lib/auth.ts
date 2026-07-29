@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 export { AUTH_COOKIE };
 const MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
-export type Role = "student" | "admin";
+export type Role = "student" | "recruiter" | "admin";
 
 export interface SessionUser {
   id: string;

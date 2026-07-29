@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Briefcase, MapPin, Building2, Eye, EyeOff } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { ApprovalNotice } from "@/components/ApprovalNotice";
 import { api } from "@/lib/client";
-import type { JobItem } from "@/lib/types";
+import type { JobItem, ApprovalStatus } from "@/lib/types";
 
 const JOB_TYPES = ["Full Time", "Part Time", "Internship", "Contract", "Remote"];
 
 const empty = {
   title: "",
-  company: "",
   location: "",
   type: "Full Time",
   experience: "",
@@ -22,23 +22,36 @@ const empty = {
 
 type FormState = typeof empty;
 
-export default function AdminJobsPage() {
+export default function RecruiterJobsPage() {
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<ApprovalStatus>("pending");
+  const [companyName, setCompanyName] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  function load() {
-    setLoading(true);
-    api<JobItem[]>("/api/jobs?all=1")
+  function loadJobs() {
+    api<JobItem[]>("/api/jobs?mine=1")
       .then(setJobs)
-      .catch(() => setJobs([]))
-      .finally(() => setLoading(false));
+      .catch(() => setJobs([]));
   }
-  useEffect(load, []);
+
+  useEffect(() => {
+    setLoading(true);
+    api<any>("/api/recruiter/stats")
+      .then((s) => {
+        setStatus(s.approvalStatus);
+        setCompanyName(s.companyName ?? "");
+        setRejectionReason(s.rejectionReason ?? "");
+        if (s.approvalStatus === "approved") loadJobs();
+      })
+      .catch(() => setStatus("pending"))
+      .finally(() => setLoading(false));
+  }, []);
 
   function openCreate() {
     setForm(empty);
@@ -50,7 +63,6 @@ export default function AdminJobsPage() {
   function openEdit(job: JobItem) {
     setForm({
       title: job.title,
-      company: job.company,
       location: job.location,
       type: job.type,
       experience: job.experience ?? "",
@@ -66,23 +78,22 @@ export default function AdminJobsPage() {
 
   async function save() {
     setError("");
-    if (!form.title.trim() || !form.company.trim() || !form.location.trim()) {
-      setError("Title, company and location are required.");
+    if (!form.title.trim() || !form.location.trim()) {
+      setError("Job title and location are required.");
       return;
     }
     setSaving(true);
     try {
-      const payload = { ...form, skills: form.skills };
       if (editingId) {
         await api(`/api/jobs/${editingId}`, {
           method: "PUT",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(form),
         });
       } else {
-        await api("/api/jobs", { method: "POST", body: JSON.stringify(payload) });
+        await api("/api/jobs", { method: "POST", body: JSON.stringify(form) });
       }
       setOpen(false);
-      load();
+      loadJobs();
     } catch (e: any) {
       setError(e?.message ?? "Could not save the job.");
     } finally {
@@ -91,7 +102,7 @@ export default function AdminJobsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this job? Related applications will also be removed.")) return;
+    if (!confirm("Delete this job? Applications received for it will also be removed.")) return;
     try {
       await api(`/api/jobs/${id}`, { method: "DELETE" });
       setJobs((p) => p.filter((j) => j._id !== id));
@@ -106,18 +117,36 @@ export default function AdminJobsPage() {
         method: "PUT",
         body: JSON.stringify({ active: !job.active }),
       });
-      load();
+      loadJobs();
     } catch {
       alert("Could not update the job.");
     }
+  }
+
+  if (loading) {
+    return <div className="h-40 animate-pulse rounded-xl bg-white" />;
+  }
+
+  if (status !== "approved") {
+    return (
+      <div>
+        <h1 className="font-heading text-2xl font-bold text-dark">My Jobs</h1>
+        <p className="mt-1 text-sm text-slate-500">Post and manage your job openings.</p>
+        <div className="mt-6">
+          <ApprovalNotice status={status} reason={rejectionReason} />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-dark">Jobs</h1>
-          <p className="mt-1 text-sm text-slate-500">Create and manage job postings.</p>
+          <h1 className="font-heading text-2xl font-bold text-dark">My Jobs</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Jobs you post here appear on the URAV job board right away.
+          </p>
         </div>
         <button
           onClick={openCreate}
@@ -128,15 +157,13 @@ export default function AdminJobsPage() {
       </div>
 
       <div className="mt-6 space-y-3">
-        {loading ? (
-          [0, 1, 2].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-white" />
-          ))
-        ) : jobs.length === 0 ? (
+        {jobs.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <Briefcase className="mx-auto h-10 w-10 text-slate-300" />
             <p className="mt-4 font-heading text-lg font-semibold text-dark">No jobs yet</p>
-            <p className="mt-1 text-sm text-slate-500">Add your first job to get started.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Post your first job and students can start applying.
+            </p>
           </div>
         ) : (
           jobs.map((job) => (
@@ -151,23 +178,17 @@ export default function AdminJobsPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-heading font-semibold text-dark">{job.title}</p>
-                    {!job.active && (
+                    {job.active ? (
+                      <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                        Live
+                      </span>
+                    ) : (
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                        Inactive
+                        Hidden
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500">
-                    {job.company}
-                    {job.postedByRole === "recruiter" && (
-                      <span className="ml-2 rounded-full bg-primary-light px-2 py-0.5 text-xs font-medium text-primary">
-                        Recruiter
-                        {typeof job.postedBy === "object" && job.postedBy
-                          ? ` · ${job.postedBy.firstName} ${job.postedBy.lastName}`
-                          : ""}
-                      </span>
-                    )}
-                  </p>
+                  <p className="text-sm text-slate-500">{job.company}</p>
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
                     <span className="inline-flex items-center gap-1">
                       <MapPin className="h-3 w-3" /> {job.location}
@@ -179,7 +200,10 @@ export default function AdminJobsPage() {
               </div>
 
               <div className="flex items-center gap-1">
-                <IconBtn title={job.active ? "Deactivate" : "Activate"} onClick={() => toggleActive(job)}>
+                <IconBtn
+                  title={job.active ? "Hide from website" : "Show on website"}
+                  onClick={() => toggleActive(job)}
+                >
                   {job.active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </IconBtn>
                 <IconBtn title="Edit" onClick={() => openEdit(job)}>
@@ -199,13 +223,15 @@ export default function AdminJobsPage() {
           {error && (
             <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
           )}
+          <p className="rounded-md bg-light px-3 py-2 text-sm text-slate-600">
+            Posting as <span className="font-medium text-dark">{companyName || "your company"}</span>
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Job Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} required />
-            <Input label="Company" value={form.company} onChange={(v) => setForm({ ...form, company: v })} required />
             <Input label="Location" value={form.location} onChange={(v) => setForm({ ...form, location: v })} required />
             <Select label="Type" value={form.type} onChange={(v) => setForm({ ...form, type: v })} options={JOB_TYPES} />
-            <Input label="Experience" value={form.experience} onChange={(v) => setForm({ ...form, experience: v })} placeholder="e.g. 1-3 years" />
-            <Input label="Salary" value={form.salary} onChange={(v) => setForm({ ...form, salary: v })} placeholder="e.g. ₹6-10 LPA" />
+            <Input label="Experience" value={form.experience} onChange={(v) => setForm({ ...form, experience: v })} placeholder="e.g. 0-2 years" />
+            <Input label="Salary" value={form.salary} onChange={(v) => setForm({ ...form, salary: v })} placeholder="e.g. ₹4-6 LPA" />
           </div>
           <Textarea
             label="Description"
@@ -226,7 +252,7 @@ export default function AdminJobsPage() {
               onChange={(e) => setForm({ ...form, active: e.target.checked })}
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/40"
             />
-            Active (visible to students)
+            Show this job on the website
           </label>
 
           <div className="flex justify-end gap-3 pt-2">

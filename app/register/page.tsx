@@ -396,6 +396,19 @@ export default function RegisterPage() {
             </p>
           </div>
 
+          {/* Role switch — recruiters register on a separate form */}
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:max-w-md">
+            <span className="flex h-11 items-center justify-center rounded-md border border-primary bg-primary-light text-sm font-medium text-primary">
+              I&apos;m a Student
+            </span>
+            <Link
+              href="/register/recruiter"
+              className="flex h-11 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-600 transition-colors hover:border-primary/40"
+            >
+              I&apos;m a Recruiter
+            </Link>
+          </div>
+
           {submitted && (
             <div className="mb-6 flex items-start gap-3 rounded-lg border border-success/30 bg-success/10 p-4">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />

@@ -37,6 +37,18 @@ export async function POST(req: Request) {
     };
     cookies().set(AUTH_COOKIE, signToken(session), authCookieOptions());
 
+    // Recruiters also get their approval state so the UI can immediately
+    // show either their dashboard or the "waiting for admin" notice.
+    if (user.role === "recruiter") {
+      return ok({
+        user: {
+          ...session,
+          approvalStatus: user.approvalStatus ?? "pending",
+          companyName: user.companyName ?? "",
+        },
+      });
+    }
+
     return ok({ user: session });
   });
 }

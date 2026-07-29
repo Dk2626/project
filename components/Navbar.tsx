@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X, LayoutDashboard, LogOut, Shield } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut, Shield, Building2 } from "lucide-react";
 import { navLinks } from "@/lib/data";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/Logo";
@@ -50,6 +50,10 @@ export function Navbar() {
               {user.role === "admin" ? (
                 <Button variant="ghost" size="sm" href="/admin">
                   <Shield className="h-4 w-4" /> Admin
+                </Button>
+              ) : user.role === "recruiter" ? (
+                <Button variant="ghost" size="sm" href="/recruiter">
+                  <Building2 className="h-4 w-4" /> Recruiter
                 </Button>
               ) : (
                 <Button variant="ghost" size="sm" href="/dashboard">
@@ -107,11 +111,21 @@ export function Navbar() {
               <>
                 <li>
                   <Link
-                    href={user.role === "admin" ? "/admin" : "/dashboard"}
+                    href={
+                      user.role === "admin"
+                        ? "/admin"
+                        : user.role === "recruiter"
+                        ? "/recruiter"
+                        : "/dashboard"
+                    }
                     className="block rounded-md px-2 py-2 text-sm font-medium text-primary hover:bg-light"
                     onClick={() => setOpen(false)}
                   >
-                    {user.role === "admin" ? "Admin Panel" : "My Dashboard"}
+                    {user.role === "admin"
+                      ? "Admin Panel"
+                      : user.role === "recruiter"
+                      ? "Recruiter Panel"
+                      : "My Dashboard"}
                   </Link>
                 </li>
                 <li className="mt-2 px-2">

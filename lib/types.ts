@@ -1,10 +1,15 @@
-export type Role = "student" | "admin";
+export type Role = "student" | "recruiter" | "admin";
+
+export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface AuthUser {
   id: string;
   email: string;
   name: string;
   role: Role;
+  /** Only meaningful for recruiters — read fresh from the DB by /api/auth/me. */
+  approvalStatus?: ApprovalStatus;
+  companyName?: string;
 }
 
 export interface JobItem {
@@ -19,6 +24,17 @@ export interface JobItem {
   skills?: string[];
   active?: boolean;
   createdAt?: string;
+  postedByRole?: "admin" | "recruiter";
+  postedBy?:
+    | string
+    | {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        companyName?: string;
+      }
+    | null;
 }
 
 export interface WebinarItem {
@@ -80,4 +96,28 @@ export interface ApplicationItem {
     degree?: string;
     resumeUrl?: string;
   } | null;
+}
+
+export interface RecruiterRecord {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  companyName?: string;
+  designation?: string;
+  companyWebsite?: string;
+  companyLocation?: string;
+  industry?: string;
+  companySize?: string;
+  companyAbout?: string;
+  linkedin?: string;
+  approvalStatus?: ApprovalStatus;
+  approvedAt?: string;
+  rejectionReason?: string;
+  createdAt?: string;
+  /** Added by /api/admin/recruiters */
+  jobCount?: number;
+  activeJobCount?: number;
+  applicantCount?: number;
 }

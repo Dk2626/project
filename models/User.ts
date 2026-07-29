@@ -1,5 +1,7 @@
 import mongoose, { Schema, model, models, type InferSchemaType } from "mongoose";
 
+export const APPROVAL_STATUSES = ["pending", "approved", "rejected"] as const;
+
 const userSchema = new Schema(
   {
     firstName: { type: String, required: true, trim: true },
@@ -17,7 +19,7 @@ const userSchema = new Schema(
     password: { type: String, required: true, select: false },
     role: {
       type: String,
-      enum: ["student", "admin"],
+      enum: ["student", "recruiter", "admin"],
       default: "student",
       index: true,
     },
@@ -47,6 +49,32 @@ const userSchema = new Schema(
     github: { type: String, trim: true },
     resumeUrl: { type: String },
     resumeKey: { type: String },
+
+    /* ------------------------------------------------------------------ */
+    /* Recruiter fields (only populated when role === "recruiter")          */
+    /* ------------------------------------------------------------------ */
+    companyName: { type: String, trim: true },
+    designation: { type: String, trim: true },
+    companyWebsite: { type: String, trim: true },
+    companyLocation: { type: String, trim: true },
+    industry: { type: String, trim: true },
+    companySize: { type: String },
+    companyAbout: { type: String, trim: true },
+
+    /**
+     * Access gate for recruiters. A freshly registered recruiter is
+     * "pending" and cannot post jobs until an admin approves them.
+     * Students / admins are always "approved" so the same guard can be
+     * used everywhere without special-casing.
+     */
+    approvalStatus: {
+      type: String,
+      enum: APPROVAL_STATUSES,
+      default: "approved",
+      index: true,
+    },
+    approvedAt: { type: Date },
+    rejectionReason: { type: String, trim: true },
   },
   { timestamps: true }
 );

@@ -9,7 +9,12 @@ import { isValidObjectId } from "mongoose";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET: admin -> all applications; student -> only their own.
+/**
+ * GET
+ *  - admin      → every application (?recruiter=<id> narrows to one recruiter)
+ *  - recruiter  → only applications made to jobs they posted
+ *  - student    → only their own
+ */
 export async function GET(req: Request) {
   return handle(async () => {
     const session = requireUser();
@@ -17,9 +22,25 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const kind = url.searchParams.get("kind"); // optional "job" | "webinar"
+    const recruiterId = url.searchParams.get("recruiter");
 
     const filter: Record<string, any> = {};
-    if (session.role !== "admin") filter.user = session.id;
+
+    if (session.role === "recruiter") {
+      // Restrict to this recruiter's own postings.
+      const myJobs = await Job.find({ postedBy: session.id }).select("_id").lean();
+      filter.kind = "job";
+      filter.job = { $in: myJobs.map((j: any) => j._id) };
+    } else if (session.role !== "admin") {
+      filter.user = session.id;
+    } else if (recruiterId) {
+      const theirJobs = await Job.find({ postedBy: recruiterId })
+        .select("_id")
+        .lean();
+      filter.kind = "job";
+      filter.job = { $in: theirJobs.map((j: any) => j._id) };
+    }
+
     if (kind === "job" || kind === "webinar") filter.kind = kind;
 
     // Register models referenced by populate (Job/Webinar/User import ensures this).
@@ -31,7 +52,10 @@ export async function GET(req: Request) {
       .sort({ createdAt: -1 })
       .populate("job")
       .populate("webinar")
-      .populate("user", "firstName lastName email phone college degree resumeUrl")
+      .populate(
+        "user",
+        "firstName lastName email phone college degree department currentYear graduationYear cgpa studentType schoolName classGrade linkedin github resumeUrl"
+      )
       .lean();
 
     return ok(apps.map(serialize));

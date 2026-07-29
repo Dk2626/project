@@ -13,18 +13,33 @@ export async function GET() {
     requireAdmin();
     await connectDB();
 
-    const [students, jobs, webinars, jobApps, webinarApps] = await Promise.all([
+    const [
+      students,
+      jobs,
+      webinars,
+      jobApps,
+      webinarApps,
+      recruiters,
+      pendingRecruiters,
+      recruiterJobs,
+    ] = await Promise.all([
       User.countDocuments({ role: "student" }),
       Job.countDocuments(),
       Webinar.countDocuments(),
       Application.countDocuments({ kind: "job" }),
       Application.countDocuments({ kind: "webinar" }),
+      User.countDocuments({ role: "recruiter" }),
+      User.countDocuments({ role: "recruiter", approvalStatus: "pending" }),
+      Job.countDocuments({ postedByRole: "recruiter" }),
     ]);
 
     return ok({
       students,
       jobs,
       webinars,
+      recruiters,
+      pendingRecruiters,
+      recruiterJobs,
       jobApplications: jobApps,
       webinarApplications: webinarApps,
       totalApplications: jobApps + webinarApps,

@@ -8,7 +8,7 @@ import {
   AUTH_COOKIE,
 } from "@/lib/auth";
 import { uploadToS3, validatePdf, isS3Configured } from "@/lib/s3";
-import { ok, fail, handle, serialize } from "@/lib/api";
+import { ok, fail, handle } from "@/lib/api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +34,9 @@ export async function POST(req: Request) {
       fields = await req.json();
     }
 
+    // Only these two roles can be self-registered — "admin" is seeded.
+    const role = fields.role === "recruiter" ? "recruiter" : "student";
+
     const required = ["firstName", "lastName", "email", "password"] as const;
     for (const key of required) {
       if (!fields[key]?.trim()) return fail(`${key} is required.`);
@@ -45,6 +48,13 @@ export async function POST(req: Request) {
     if (fields.password.length < 8)
       return fail("Password must be at least 8 characters.");
 
+    if (role === "recruiter") {
+      if (!fields.companyName?.trim()) return fail("Company name is required.");
+      if (!fields.designation?.trim()) return fail("Your designation is required.");
+      if (!fields.companyLocation?.trim())
+        return fail("Company location is required.");
+    }
+
     await connectDB();
 
     const existing = await User.findOne({ email }).lean();
@@ -54,6 +64,49 @@ export async function POST(req: Request) {
         409
       );
 
+    /* ---------------------------- recruiter --------------------------- */
+    if (role === "recruiter") {
+      const passwordHash = await hashPassword(fields.password);
+      const recruiter = await User.create({
+        firstName: fields.firstName.trim(),
+        lastName: fields.lastName.trim(),
+        email,
+        phone: fields.phone,
+        password: passwordHash,
+        role: "recruiter",
+        // Waits for an admin to switch this to "approved".
+        approvalStatus: "pending",
+        companyName: fields.companyName?.trim(),
+        designation: fields.designation?.trim(),
+        companyWebsite: fields.companyWebsite?.trim(),
+        companyLocation: fields.companyLocation?.trim(),
+        industry: fields.industry?.trim(),
+        companySize: fields.companySize,
+        companyAbout: fields.companyAbout?.trim(),
+        linkedin: fields.linkedin?.trim(),
+      });
+
+      const session = {
+        id: recruiter._id.toString(),
+        email: recruiter.email,
+        name: `${recruiter.firstName} ${recruiter.lastName}`,
+        role: "recruiter" as const,
+      };
+      cookies().set(AUTH_COOKIE, signToken(session), authCookieOptions());
+
+      return ok(
+        {
+          user: {
+            ...session,
+            approvalStatus: "pending",
+            companyName: recruiter.companyName,
+          },
+        },
+        201
+      );
+    }
+
+    /* ----------------------------- student ---------------------------- */
     // Upload resume to S3 if one was provided.
     let resumeUrl: string | undefined;
     let resumeKey: string | undefined;
@@ -90,6 +143,7 @@ export async function POST(req: Request) {
       gender: fields.gender,
       password: passwordHash,
       role: "student",
+      approvalStatus: "approved",
       studentType: fields.studentType || "College Student",
       college: fields.college,
       degree: fields.degree,

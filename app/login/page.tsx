@@ -53,7 +53,9 @@ function LoginForm() {
       });
       setUser(data.user);
       if (redirect) router.push(redirect);
-      else router.push(data.user.role === "admin" ? "/admin" : "/dashboard");
+      else if (data.user.role === "admin") router.push("/admin");
+      else if (data.user.role === "recruiter") router.push("/recruiter");
+      else router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(

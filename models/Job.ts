@@ -15,6 +15,18 @@ const jobSchema = new Schema(
     description: { type: String, default: "" },
     skills: { type: [String], default: [] },
     active: { type: Boolean, default: true, index: true },
+
+    /**
+     * Who created the posting. Missing on jobs created before recruiters
+     * existed (and on jobs the admin posts directly) — treat null as
+     * "posted by admin".
+     */
+    postedBy: { type: Schema.Types.ObjectId, ref: "User", index: true },
+    postedByRole: {
+      type: String,
+      enum: ["admin", "recruiter"],
+      default: "admin",
+    },
   },
   { timestamps: true }
 );
