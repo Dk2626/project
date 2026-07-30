@@ -19,7 +19,7 @@ import { ProfileCard } from "@/components/ProfileCard";
 import { SkeletonPage, SkeletonList } from "@/components/ui/Skeleton";
 import { api } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
-import type { ApplicationItem } from "@/lib/types";
+import { isAdminRole, type ApplicationItem } from "@/lib/types";
 
 function formatDate(iso?: string) {
   if (!iso) return "";
@@ -41,13 +41,17 @@ export default function DashboardPage() {
   const [tab, setTab] = useState<"job" | "webinar">("job");
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (authLoading) return;
+    if (!user) {
       router.replace("/login?redirect=/dashboard");
+    } else if (isAdminRole(user.role)) {
+      // Admins and superadmins have no student dashboard — send them to /admin.
+      router.replace("/admin");
     }
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isAdminRole(user.role)) return;
     api<ApplicationItem[]>("/api/applications")
       .then(setApps)
       .catch(() => setApps([]))
@@ -71,7 +75,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (authLoading || !user) {
+  if (authLoading || !user || isAdminRole(user.role)) {
     return (
       <>
         <Navbar />

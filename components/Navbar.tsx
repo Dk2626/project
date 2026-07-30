@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/components/AuthProvider";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { isAdminRole } from "@/lib/types";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -48,7 +49,7 @@ export function Navbar() {
             <Skeleton className="h-9 w-24" />
           ) : user ? (
             <>
-              {user.role === "admin" ? (
+              {isAdminRole(user.role) ? (
                 <Button variant="ghost" size="sm" href="/admin">
                   <Shield className="h-4 w-4" /> Admin
                 </Button>
@@ -113,7 +114,7 @@ export function Navbar() {
                 <li>
                   <Link
                     href={
-                      user.role === "admin"
+                      isAdminRole(user.role)
                         ? "/admin"
                         : user.role === "recruiter"
                         ? "/recruiter"
@@ -122,7 +123,7 @@ export function Navbar() {
                     className="block rounded-md px-2 py-2 text-sm font-medium text-primary hover:bg-light"
                     onClick={() => setOpen(false)}
                   >
-                    {user.role === "admin"
+                    {isAdminRole(user.role)
                       ? "Admin Panel"
                       : user.role === "recruiter"
                       ? "Recruiter Panel"
