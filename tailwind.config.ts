@@ -35,6 +35,15 @@ const config: Config = {
         xl: "16px",
         "2xl": "24px",
       },
+      keyframes: {
+        // Sweeping highlight used by the loading skeletons.
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
+      animation: {
+        shimmer: "shimmer 1.6s infinite",
+      },
       boxShadow: {
         sm: "0 1px 2px 0 rgba(15, 23, 42, 0.05)",
         md: "0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06)",

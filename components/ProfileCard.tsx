@@ -16,6 +16,8 @@ import {
   Github,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { SkeletonProfile } from "@/components/ui/Skeleton";
+import { ResumeUpload } from "@/components/ResumeUpload";
 import { api } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { StudentRecord } from "@/lib/types";
@@ -209,7 +211,7 @@ export function ProfileCard() {
   }
 
   if (loading) {
-    return <div className="h-48 animate-pulse rounded-xl bg-white" />;
+    return <SkeletonProfile />;
   }
   if (!profile) return null;
 
@@ -273,6 +275,18 @@ export function ProfileCard() {
           </>
         )}
         <Meta icon={UserIcon} label="Gender" value={profile.gender} />
+      </div>
+
+      {/* ---------------- CV ---------------- */}
+      <div className="mt-4 border-t border-slate-100 pt-4">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          My CV
+        </p>
+        <ResumeUpload
+          endpoint="/api/profile/resume"
+          resumeUrl={profile.resumeUrl}
+          onUpdated={setProfile}
+        />
       </div>
 
       {/* ---------------- Edit modal ---------------- */}

@@ -37,3 +37,15 @@
     @apply mx-auto w-full max-w-[1200px] px-6;
   }
 }
+
+@layer utilities {
+  /*
+   * Respect the OS "reduce motion" setting — the shimmer sweep becomes a
+   * gentle static tint rather than a moving highlight.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer {
+      animation: none;
+    }
+  }
+}

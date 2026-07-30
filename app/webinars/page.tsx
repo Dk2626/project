@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { Badge } from "@/components/ui/Badge";
 import { ApplyButton } from "@/components/ApplyButton";
 import { api } from "@/lib/client";
+import { Skeleton, SkeletonCard, SkeletonText } from "@/components/ui/Skeleton";
 import { useAuth } from "@/components/AuthProvider";
 import type { WebinarItem, ApplicationItem } from "@/lib/types";
 
@@ -60,7 +61,12 @@ export default function WebinarsPage() {
           {loading ? (
             <div className="grid gap-6 md:grid-cols-3">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-72 animate-pulse rounded-xl bg-white" />
+                <SkeletonCard key={i}>
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="mt-3 h-3 w-1/3" />
+                  <SkeletonText className="mt-4" lines={4} />
+                  <Skeleton className="mt-5 h-10 w-full rounded-md" />
+                </SkeletonCard>
               ))}
             </div>
           ) : webinars.length === 0 ? (

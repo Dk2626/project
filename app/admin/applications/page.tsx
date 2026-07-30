@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Users, FileText, Search, Mail, Phone, GraduationCap, ExternalLink } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { api } from "@/lib/client";
+import { usePaginatedList } from "@/lib/usePaginatedList";
+import { Pagination } from "@/components/ui/Pagination";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import type { ApplicationItem } from "@/lib/types";
 
 const JOB_STATUSES = ["Applied", "Under Review", "Shortlisted", "Interview", "Rejected", "Accepted"];
@@ -18,25 +21,18 @@ function formatDate(iso?: string) {
 }
 
 export default function AdminApplicationsPage() {
-  const [apps, setApps] = useState<ApplicationItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"job" | "webinar">("job");
-  const [query, setQuery] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  function load() {
-    setLoading(true);
-    api<ApplicationItem[]>("/api/applications")
-      .then(setApps)
-      .catch(() => setApps([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(load, []);
+  const list = usePaginatedList<ApplicationItem>({
+    path: "/api/applications",
+    params: { kind: tab },
+  });
 
   async function updateStatus(id: string, status: string) {
     setUpdatingId(id);
-    // optimistic
-    setApps((prev) => prev.map((a) => (a._id === id ? { ...a, status } : a)));
+    // Optimistic — the select already shows the new value.
+    list.patchItem((a) => a._id === id, { status });
     try {
       await api(`/api/applications/${id}`, {
         method: "PUT",
@@ -44,30 +40,14 @@ export default function AdminApplicationsPage() {
       });
     } catch {
       alert("Could not update status.");
-      load();
+      list.reload();
     } finally {
       setUpdatingId(null);
     }
   }
 
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return apps
-      .filter((a) => a.kind === tab)
-      .filter((a) => {
-        if (!q) return true;
-        const u = a.user;
-        const target = tab === "job" ? a.job : a.webinar;
-        return (
-          `${u?.firstName} ${u?.lastName}`.toLowerCase().includes(q) ||
-          (u?.email ?? "").toLowerCase().includes(q) ||
-          (target?.title ?? "").toLowerCase().includes(q)
-        );
-      });
-  }, [apps, tab, query]);
-
-  const jobCount = apps.filter((a) => a.kind === "job").length;
-  const webinarCount = apps.filter((a) => a.kind === "webinar").length;
+  const jobCount = list.counts.job;
+  const webinarCount = list.counts.webinar;
   const statuses = tab === "job" ? JOB_STATUSES : WEBINAR_STATUSES;
 
   return (
@@ -86,7 +66,7 @@ export default function AdminApplicationsPage() {
               tab === "job" ? "bg-primary text-white" : "text-slate-600 hover:bg-light"
             }`}
           >
-            Job applicants ({jobCount})
+            Job applicants{jobCount !== undefined && ` (${jobCount})`}
           </button>
           <button
             onClick={() => setTab("webinar")}
@@ -94,25 +74,25 @@ export default function AdminApplicationsPage() {
               tab === "webinar" ? "bg-primary text-white" : "text-slate-600 hover:bg-light"
             }`}
           >
-            Webinar registrants ({webinarCount})
+            Webinar registrants{webinarCount !== undefined && ` (${webinarCount})`}
           </button>
         </div>
 
         <div className="relative sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={list.query}
+            onChange={(e) => list.setQuery(e.target.value)}
             placeholder="Search name, email or title"
             className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
         </div>
       </div>
 
-      <div className="mt-5 space-y-3">
-        {loading ? (
-          [0, 1, 2].map((i) => <div key={i} className="h-32 animate-pulse rounded-xl bg-white" />)
-        ) : filtered.length === 0 ? (
+      <div className="mt-5">
+        {list.loading ? (
+          <SkeletonList rows={5} />
+        ) : list.items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <Users className="mx-auto h-10 w-10 text-slate-300" />
             <p className="mt-4 font-heading text-lg font-semibold text-dark">
@@ -123,8 +103,13 @@ export default function AdminApplicationsPage() {
             </p>
           </div>
         ) : (
-          filtered.map((a) => {
-            const u = a.user;
+          <div
+            className={`space-y-3 transition-opacity ${
+              list.fetching ? "opacity-60" : ""
+            }`}
+          >
+            {list.items.map((a) => {
+              const u = a.user;
             const target = tab === "job" ? a.job : a.webinar;
             const resume = a.resumeUrl || u?.resumeUrl;
             return (
@@ -205,9 +190,21 @@ export default function AdminApplicationsPage() {
                   )}
                 </div>
               </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
+
+        <Pagination
+          page={list.page}
+          pages={list.pages}
+          total={list.total}
+          limit={list.limit}
+          onPageChange={list.setPage}
+          onLimitChange={list.setLimit}
+          busy={list.fetching}
+          label={tab === "job" ? "applications" : "registrations"}
+        />
       </div>
     </div>
   );

@@ -6,29 +6,35 @@ import { ok } from "@/lib/api";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/**
+ * The JWT is a snapshot from login time, so role and approval state are
+ * topped up from the database on every call. That means promoting someone
+ * to "superadmin" (or approving a recruiter) takes effect immediately,
+ * without them having to log out and back in.
+ */
 export async function GET() {
   const session = getSessionUser();
   if (!session) return ok({ user: null });
 
-  // Recruiters need their live approval state (an admin may have approved
-  // them after the cookie was issued), so top it up from the database.
-  if (session.role === "recruiter") {
-    try {
-      await connectDB();
-      const me: any = await User.findById(session.id)
-        .select("approvalStatus companyName")
-        .lean();
-      return ok({
-        user: {
-          ...session,
-          approvalStatus: me?.approvalStatus ?? "pending",
-          companyName: me?.companyName ?? "",
-        },
-      });
-    } catch {
-      return ok({ user: { ...session, approvalStatus: "pending" } });
-    }
-  }
+  try {
+    await connectDB();
+    const me: any = await User.findById(session.id)
+      .select("role approvalStatus companyName firstName lastName")
+      .lean();
 
-  return ok({ user: session });
+    if (!me) return ok({ user: null });
+
+    return ok({
+      user: {
+        ...session,
+        name: `${me.firstName} ${me.lastName}`,
+        role: me.role ?? session.role,
+        approvalStatus: me.approvalStatus ?? "approved",
+        companyName: me.companyName ?? "",
+      },
+    });
+  } catch {
+    // Database hiccup — fall back to whatever the cookie says.
+    return ok({ user: session });
+  }
 }

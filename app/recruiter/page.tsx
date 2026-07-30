@@ -12,6 +12,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { api } from "@/lib/client";
+import { SkeletonStats } from "@/components/ui/Skeleton";
 import { useAuth } from "@/components/AuthProvider";
 import { ApprovalNotice } from "@/components/ApprovalNotice";
 import type { ApprovalStatus } from "@/lib/types";
@@ -61,7 +62,9 @@ export default function RecruiterOverview() {
       </p>
 
       {loading ? (
-        <div className="mt-6 h-40 animate-pulse rounded-xl bg-white" />
+        <div className="mt-6">
+          <SkeletonStats />
+        </div>
       ) : status !== "approved" ? (
         <div className="mt-6">
           <ApprovalNotice status={status} reason={stats?.rejectionReason} />

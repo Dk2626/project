@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   return handle(async () => {
-    requireAdmin();
+    await requireAdmin();
     await connectDB();
 
     const [
@@ -22,6 +22,7 @@ export async function GET() {
       recruiters,
       pendingRecruiters,
       recruiterJobs,
+      admins,
     ] = await Promise.all([
       User.countDocuments({ role: "student" }),
       Job.countDocuments(),
@@ -31,6 +32,7 @@ export async function GET() {
       User.countDocuments({ role: "recruiter" }),
       User.countDocuments({ role: "recruiter", approvalStatus: "pending" }),
       Job.countDocuments({ postedByRole: "recruiter" }),
+      User.countDocuments({ role: { $in: ["admin", "superadmin"] } }),
     ]);
 
     return ok({
@@ -40,6 +42,7 @@ export async function GET() {
       recruiters,
       pendingRecruiters,
       recruiterJobs,
+      admins,
       jobApplications: jobApps,
       webinarApplications: webinarApps,
       totalApplications: jobApps + webinarApps,

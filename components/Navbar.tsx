@@ -8,6 +8,7 @@ import { navLinks } from "@/lib/data";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/components/AuthProvider";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -44,7 +45,7 @@ export function Navbar() {
 
         <div className="hidden items-center gap-3 md:flex">
           {loading ? (
-            <span className="h-9 w-24 animate-pulse rounded-md bg-slate-100" />
+            <Skeleton className="h-9 w-24" />
           ) : user ? (
             <>
               {user.role === "admin" ? (

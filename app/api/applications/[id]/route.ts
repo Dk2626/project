@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Application, ALL_STATUSES } from "@/models/Application";
-import { ok, fail, handle, serialize, requireUser } from "@/lib/api";
+import { ok, fail, handle, serialize, requireUser, isAdminRole } from "@/lib/api";
 import { Job } from "@/models/Job";
 import { isValidObjectId } from "mongoose";
 
@@ -14,7 +14,7 @@ type Ctx = { params: { id: string } };
 export async function PUT(req: Request, { params }: Ctx) {
   return handle(async () => {
     const session = requireUser();
-    if (session.role !== "admin" && session.role !== "recruiter")
+    if (!isAdminRole(session.role) && session.role !== "recruiter")
       return fail("You are not allowed to change an application status.", 403);
     if (!isValidObjectId(params.id)) return fail("Application not found.", 404);
     const { status, note } = await req.json();
@@ -58,7 +58,7 @@ export async function DELETE(_req: Request, { params }: Ctx) {
     const app = await Application.findById(params.id);
     if (!app) return fail("Application not found.", 404);
 
-    if (session.role !== "admin" && app.user.toString() !== session.id)
+    if (!isAdminRole(session.role) && app.user.toString() !== session.id)
       return fail("You can only withdraw your own applications.", 403);
 
     await app.deleteOne();

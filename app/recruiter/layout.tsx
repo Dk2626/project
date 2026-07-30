@@ -7,16 +7,20 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
+  UserCog,
   LogOut,
   ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/components/AuthProvider";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { isAdminRole } from "@/lib/types";
 
 const nav = [
   { href: "/recruiter", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/recruiter/jobs", label: "My Jobs", icon: Briefcase },
   { href: "/recruiter/applicants", label: "Applicants", icon: Users },
+  { href: "/recruiter/profile", label: "My Profile", icon: UserCog },
 ];
 
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
@@ -27,14 +31,16 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace("/login?redirect=/recruiter");
-    else if (user.role === "admin") router.replace("/admin");
+    else if (isAdminRole(user.role)) router.replace("/admin");
     else if (user.role !== "recruiter") router.replace("/dashboard");
   }, [user, loading, router]);
 
   if (loading || !user || user.role !== "recruiter") {
     return (
-      <div className="grid min-h-screen place-items-center bg-light">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+      <div className="min-h-screen bg-light">
+        <div className="mx-auto max-w-6xl p-5 sm:p-8">
+          <SkeletonPage />
+        </div>
       </div>
     );
   }

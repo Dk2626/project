@@ -2,6 +2,9 @@ import mongoose, { Schema, model, models, type InferSchemaType } from "mongoose"
 
 export const APPROVAL_STATUSES = ["pending", "approved", "rejected"] as const;
 
+export const ROLES = ["student", "recruiter", "admin", "superadmin"] as const;
+export type UserRole = (typeof ROLES)[number];
+
 const userSchema = new Schema(
   {
     firstName: { type: String, required: true, trim: true },
@@ -19,7 +22,7 @@ const userSchema = new Schema(
     password: { type: String, required: true, select: false },
     role: {
       type: String,
-      enum: ["student", "recruiter", "admin"],
+      enum: ["student", "recruiter", "admin", "superadmin"],
       default: "student",
       index: true,
     },
@@ -78,6 +81,10 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+/* Indexes that keep the paginated admin lists fast as the table grows. */
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ role: 1, approvalStatus: 1, createdAt: -1 });
 
 export type UserDoc = InferSchemaType<typeof userSchema> & {
   _id: mongoose.Types.ObjectId;

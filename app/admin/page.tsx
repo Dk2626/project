@@ -11,8 +11,11 @@ import {
   Building2,
   Clock,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { api } from "@/lib/client";
+import { useAuth } from "@/components/AuthProvider";
+import { SkeletonStats, Skeleton } from "@/components/ui/Skeleton";
 
 interface Stats {
   students: number;
@@ -21,12 +24,15 @@ interface Stats {
   recruiters: number;
   pendingRecruiters: number;
   recruiterJobs: number;
+  admins: number;
   jobApplications: number;
   webinarApplications: number;
   totalApplications: number;
 }
 
 export default function AdminOverview() {
+  const { user } = useAuth();
+  const isSuper = user?.role === "superadmin";
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,6 +54,17 @@ export default function AdminOverview() {
       icon: FileText,
       href: "/admin/applications",
     },
+    // Only a superadmin can reach the Admins screen, so only they see the tile.
+    ...(isSuper
+      ? [
+          {
+            label: "Admin Accounts",
+            value: stats?.admins,
+            icon: ShieldCheck,
+            href: "/admin/admins",
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -72,7 +89,12 @@ export default function AdminOverview() {
         </Link>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {loading ? (
+        <div className="mt-6">
+          <SkeletonStats count={isSuper ? 6 : 5} />
+        </div>
+      ) : (
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ label, value, icon: Icon, href }) => (
           <Link
             key={label}
@@ -86,12 +108,13 @@ export default function AdminOverview() {
               <ArrowRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
             </div>
             <p className="mt-4 font-heading text-3xl font-bold text-dark">
-              {loading ? "—" : value ?? 0}
+              {value ?? 0}
             </p>
             <p className="text-sm text-slate-500">{label}</p>
           </Link>
         ))}
       </div>
+      )}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -102,7 +125,11 @@ export default function AdminOverview() {
             <div>
               <p className="font-heading font-semibold text-dark">Job applications</p>
               <p className="text-sm text-slate-500">
-                {loading ? "—" : stats?.jobApplications ?? 0} received
+                {loading ? (
+                  <Skeleton className="inline-block h-3.5 w-24 align-middle" />
+                ) : (
+                  `${stats?.jobApplications ?? 0} received`
+                )}
               </p>
             </div>
           </div>
@@ -122,8 +149,13 @@ export default function AdminOverview() {
             <div>
               <p className="font-heading font-semibold text-dark">Recruiter postings</p>
               <p className="text-sm text-slate-500">
-                {loading ? "—" : stats?.recruiterJobs ?? 0} of {loading ? "—" : stats?.jobs ?? 0}{" "}
-                jobs posted by recruiters
+                {loading ? (
+                  <Skeleton className="inline-block h-3.5 w-40 align-middle" />
+                ) : (
+                  `${stats?.recruiterJobs ?? 0} of ${
+                    stats?.jobs ?? 0
+                  } jobs posted by recruiters`
+                )}
               </p>
             </div>
           </div>
@@ -143,7 +175,11 @@ export default function AdminOverview() {
             <div>
               <p className="font-heading font-semibold text-dark">Webinar registrations</p>
               <p className="text-sm text-slate-500">
-                {loading ? "—" : stats?.webinarApplications ?? 0} registered
+                {loading ? (
+                  <Skeleton className="inline-block h-3.5 w-24 align-middle" />
+                ) : (
+                  `${stats?.webinarApplications ?? 0} registered`
+                )}
               </p>
             </div>
           </div>

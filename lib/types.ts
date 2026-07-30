@@ -1,4 +1,22 @@
-export type Role = "student" | "recruiter" | "admin";
+export type Role = "student" | "recruiter" | "admin" | "superadmin";
+
+/** Roles that may enter /admin. */
+export const ADMIN_ROLES: Role[] = ["admin", "superadmin"];
+export function isAdminRole(role?: string): boolean {
+  return role === "admin" || role === "superadmin";
+}
+export function isSuperAdmin(role?: string): boolean {
+  return role === "superadmin";
+}
+
+/** Envelope returned by any list endpoint called with ?page=… */
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
 
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
@@ -74,6 +92,18 @@ export interface StudentRecord {
   linkedin?: string;
   github?: string;
   resumeUrl?: string;
+  resumeKey?: string;
+  createdAt?: string;
+}
+
+/** An admin / superadmin account, as listed in the Admins screen. */
+export interface AdminRecord {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  role: "admin" | "superadmin";
   createdAt?: string;
 }
 

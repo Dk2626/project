@@ -16,6 +16,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ApplyButton } from "@/components/ApplyButton";
 import { api, ApiError } from "@/lib/client";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 import { useAuth } from "@/components/AuthProvider";
 import type { JobItem, ApplicationItem } from "@/lib/types";
 
@@ -56,7 +57,11 @@ export default function JobDetailPage() {
           </Link>
 
           {loading ? (
-            <div className="mt-6 h-64 animate-pulse rounded-2xl bg-white" />
+            <div className="mt-6 space-y-4 rounded-2xl border border-slate-100 bg-white p-6">
+              <Skeleton className="h-8 w-2/3" />
+              <Skeleton className="h-4 w-1/3" />
+              <SkeletonText lines={6} />
+            </div>
           ) : notFound || !job ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
               <Briefcase className="mx-auto h-10 w-10 text-slate-300" />

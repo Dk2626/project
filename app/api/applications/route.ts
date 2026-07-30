@@ -3,7 +3,17 @@ import { Application } from "@/models/Application";
 import { Job } from "@/models/Job";
 import { Webinar } from "@/models/Webinar";
 import { User } from "@/models/User";
-import { ok, fail, handle, serialize, requireUser } from "@/lib/api";
+import {
+  ok,
+  fail,
+  handle,
+  serialize,
+  requireUser,
+  isAdminRole,
+  pageParams,
+  paginated,
+  searchFilter,
+} from "@/lib/api";
 import { isValidObjectId } from "mongoose";
 
 export const runtime = "nodejs";
@@ -14,6 +24,8 @@ export const dynamic = "force-dynamic";
  *  - admin      → every application (?recruiter=<id> narrows to one recruiter)
  *  - recruiter  → only applications made to jobs they posted
  *  - student    → only their own
+ *
+ * ?page= & ?limit= return a paginated envelope; ?status= narrows by status.
  */
 export async function GET(req: Request) {
   return handle(async () => {
@@ -31,7 +43,7 @@ export async function GET(req: Request) {
       const myJobs = await Job.find({ postedBy: session.id }).select("_id").lean();
       filter.kind = "job";
       filter.job = { $in: myJobs.map((j: any) => j._id) };
-    } else if (session.role !== "admin") {
+    } else if (!isAdminRole(session.role)) {
       filter.user = session.id;
     } else if (recruiterId) {
       const theirJobs = await Job.find({ postedBy: recruiterId })
@@ -43,22 +55,78 @@ export async function GET(req: Request) {
 
     if (kind === "job" || kind === "webinar") filter.kind = kind;
 
+    const status = url.searchParams.get("status");
+    if (status) filter.status = status;
+
+    /**
+     * Free-text search spans the applicant and the thing they applied to,
+     * both of which live in other collections. Mongo can't regex across a
+     * populate(), so we resolve the matching user / job / webinar ids first
+     * and then constrain the application query by them.
+     */
+    const q = (url.searchParams.get("q") ?? "").trim();
+    if (q) {
+      const [users, jobs, webinars] = await Promise.all([
+        User.find(searchFilter(q, ["firstName", "lastName", "email"]) as any)
+          .select("_id")
+          .lean(),
+        Job.find(searchFilter(q, ["title", "company"]) as any)
+          .select("_id")
+          .lean(),
+        Webinar.find(searchFilter(q, ["title", "speaker"]) as any)
+          .select("_id")
+          .lean(),
+      ]);
+
+      const or: Record<string, any>[] = [
+        { user: { $in: users.map((u: any) => u._id) } },
+        { job: { $in: jobs.map((j: any) => j._id) } },
+        { webinar: { $in: webinars.map((w: any) => w._id) } },
+      ];
+
+      // Combine with whatever scoping is already in place (a recruiter's
+      // own jobs, for instance) rather than replacing it.
+      filter.$and = [...(filter.$and ?? []), { $or: or }];
+    }
+
     // Register models referenced by populate (Job/Webinar/User import ensures this).
     void Job;
     void Webinar;
     void User;
 
-    const apps = await Application.find(filter)
-      .sort({ createdAt: -1 })
-      .populate("job")
-      .populate("webinar")
-      .populate(
-        "user",
-        "firstName lastName email phone college degree department currentYear graduationYear cgpa studentType schoolName classGrade linkedin github resumeUrl"
-      )
-      .lean();
+    const USER_FIELDS =
+      "firstName lastName email phone college degree department currentYear graduationYear cgpa studentType schoolName classGrade linkedin github resumeUrl";
 
-    return ok(apps.map(serialize));
+    const { page, limit, skip, paged } = pageParams(req);
+
+    if (!paged) {
+      const apps = await Application.find(filter)
+        .sort({ createdAt: -1 })
+        .populate("job")
+        .populate("webinar")
+        .populate("user", USER_FIELDS)
+        .lean();
+      return ok(apps.map(serialize));
+    }
+
+    const [apps, total, jobCount, webinarCount] = await Promise.all([
+      Application.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("job")
+        .populate("webinar")
+        .populate("user", USER_FIELDS)
+        .lean(),
+      Application.countDocuments(filter),
+      Application.countDocuments({ ...filter, kind: "job" }),
+      Application.countDocuments({ ...filter, kind: "webinar" }),
+    ]);
+
+    return ok({
+      ...paginated(apps.map(serialize), total, { page, limit }),
+      counts: { job: jobCount, webinar: webinarCount },
+    });
   });
 }
 

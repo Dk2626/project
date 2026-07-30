@@ -8,6 +8,10 @@ import {
   serialize,
   requireJobPoster,
   requireUser,
+  isAdminRole,
+  pageParams,
+  paginated,
+  searchFilter,
 } from "@/lib/api";
 
 export const runtime = "nodejs";
@@ -19,6 +23,11 @@ export const dynamic = "force-dynamic";
  *  - ?all=1           → every job, admin only
  *  - ?mine=1          → the signed-in recruiter's own jobs
  *  - ?recruiter=<id>  → one recruiter's jobs, admin only
+ *
+ * Add ?page=1&limit=10 (and optionally &q=) to get a paginated envelope
+ * `{ items, total, page, limit, pages }` instead of a plain array. Without
+ * ?page the response shape is unchanged, so the public website components
+ * keep working as they are.
  */
 export async function GET(req: Request) {
   return handle(async () => {
@@ -37,21 +46,39 @@ export async function GET(req: Request) {
       filter = { postedBy: session.id };
     } else if (recruiterId) {
       const session = requireUser();
-      if (session.role !== "admin" && session.id !== recruiterId)
+      if (!isAdminRole(session.role) && session.id !== recruiterId)
         return fail("You can only view your own job postings.", 403);
       filter = { postedBy: recruiterId };
     } else if (includeAll) {
       const session = requireUser();
-      if (session.role !== "admin")
+      if (!isAdminRole(session.role))
         return fail("Admin access is required for this action.", 403);
       filter = {};
     }
 
-    const jobs = await Job.find(filter)
-      .sort({ createdAt: -1 })
-      .populate("postedBy", "firstName lastName email companyName")
-      .lean();
-    return ok(jobs.map(serialize));
+    const { page, limit, skip, paged, q } = pageParams(req);
+    const search = searchFilter(q, ["title", "company", "location"]);
+    if (search) Object.assign(filter, search);
+
+    if (!paged) {
+      const jobs = await Job.find(filter)
+        .sort({ createdAt: -1 })
+        .populate("postedBy", "firstName lastName email companyName")
+        .lean();
+      return ok(jobs.map(serialize));
+    }
+
+    const [jobs, total] = await Promise.all([
+      Job.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("postedBy", "firstName lastName email companyName")
+        .lean(),
+      Job.countDocuments(filter),
+    ]);
+
+    return ok(paginated(jobs.map(serialize), total, { page, limit }));
   });
 }
 

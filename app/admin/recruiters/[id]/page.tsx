@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { api } from "@/lib/client";
+import { SkeletonProfile, SkeletonList } from "@/components/ui/Skeleton";
 import type {
   ApplicationItem,
   JobItem,
@@ -129,7 +130,12 @@ export default function AdminRecruiterDetailPage() {
   }, [data, query]);
 
   if (loading)
-    return <div className="h-64 animate-pulse rounded-xl bg-white" />;
+    return (
+      <div className="space-y-6">
+        <SkeletonProfile />
+        <SkeletonList rows={3} />
+      </div>
+    );
 
   if (!data) {
     return (

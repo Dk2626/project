@@ -1,9 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Briefcase, MapPin, Building2, Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Briefcase,
+  MapPin,
+  Building2,
+  Eye,
+  EyeOff,
+  Search,
+} from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/client";
+import { usePaginatedList } from "@/lib/usePaginatedList";
+import { Pagination } from "@/components/ui/Pagination";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import type { JobItem } from "@/lib/types";
 
 const JOB_TYPES = ["Full Time", "Part Time", "Internship", "Contract", "Remote"];
@@ -23,22 +36,14 @@ const empty = {
 type FormState = typeof empty;
 
 export default function AdminJobsPage() {
-  const [jobs, setJobs] = useState<JobItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const list = usePaginatedList<JobItem>({ path: "/api/jobs", params: { all: "1" } });
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  function load() {
-    setLoading(true);
-    api<JobItem[]>("/api/jobs?all=1")
-      .then(setJobs)
-      .catch(() => setJobs([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(load, []);
+  const load = list.reload;
 
   function openCreate() {
     setForm(empty);
@@ -94,7 +99,8 @@ export default function AdminJobsPage() {
     if (!confirm("Delete this job? Related applications will also be removed.")) return;
     try {
       await api(`/api/jobs/${id}`, { method: "DELETE" });
-      setJobs((p) => p.filter((j) => j._id !== id));
+      list.removeItem((j) => j._id === id);
+      list.reload();
     } catch {
       alert("Could not delete the job.");
     }
@@ -106,7 +112,7 @@ export default function AdminJobsPage() {
         method: "PUT",
         body: JSON.stringify({ active: !job.active }),
       });
-      load();
+      list.patchItem((j) => j._id === job._id, { active: !job.active });
     } catch {
       alert("Could not update the job.");
     }
@@ -127,19 +133,34 @@ export default function AdminJobsPage() {
         </button>
       </div>
 
-      <div className="mt-6 space-y-3">
-        {loading ? (
-          [0, 1, 2].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-white" />
-          ))
-        ) : jobs.length === 0 ? (
+      <div className="mt-6 flex justify-end">
+        <div className="relative sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={list.query}
+            onChange={(e) => list.setQuery(e.target.value)}
+            placeholder="Search title, company or location"
+            className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+      </div>
+
+      <div className="mt-5">
+        {list.loading ? (
+          <SkeletonList rows={5} />
+        ) : list.items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <Briefcase className="mx-auto h-10 w-10 text-slate-300" />
             <p className="mt-4 font-heading text-lg font-semibold text-dark">No jobs yet</p>
             <p className="mt-1 text-sm text-slate-500">Add your first job to get started.</p>
           </div>
         ) : (
-          jobs.map((job) => (
+          <div
+            className={`space-y-3 transition-opacity ${
+              list.fetching ? "opacity-60" : ""
+            }`}
+          >
+            {list.items.map((job) => (
             <div
               key={job._id}
               className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
@@ -190,8 +211,20 @@ export default function AdminJobsPage() {
                 </IconBtn>
               </div>
             </div>
-          ))
+            ))}
+          </div>
         )}
+
+        <Pagination
+          page={list.page}
+          pages={list.pages}
+          total={list.total}
+          limit={list.limit}
+          onPageChange={list.setPage}
+          onLimitChange={list.setLimit}
+          busy={list.fetching}
+          label="jobs"
+        />
       </div>
 
       <Modal open={open} onClose={() => setOpen(false)} title={editingId ? "Edit Job" : "Add Job"}>

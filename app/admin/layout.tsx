@@ -10,12 +10,20 @@ import {
   Users,
   GraduationCap,
   Building2,
+  ShieldCheck,
   LogOut,
   ExternalLink,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/components/AuthProvider";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { isAdminRole } from "@/lib/types";
 
+/**
+ * `superOnly` entries are hidden from ordinary admins. The API routes
+ * behind them enforce the same rule server-side, so hiding the link is a
+ * convenience rather than the actual protection.
+ */
 const nav = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/students", label: "Students", icon: GraduationCap },
@@ -23,6 +31,12 @@ const nav = [
   { href: "/admin/jobs", label: "Jobs", icon: Briefcase },
   { href: "/admin/webinars", label: "Webinars", icon: Video },
   { href: "/admin/applications", label: "Applications", icon: Users },
+  {
+    href: "/admin/admins",
+    label: "Admins",
+    icon: ShieldCheck,
+    superOnly: true,
+  },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -33,16 +47,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace("/login?redirect=/admin");
-    else if (user.role !== "admin") router.replace("/");
+    else if (!isAdminRole(user.role)) router.replace("/");
   }, [user, loading, router]);
 
-  if (loading || !user || user.role !== "admin") {
+  if (loading || !user || !isAdminRole(user.role)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-light">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-primary" />
+      <div className="min-h-screen bg-light">
+        <div className="mx-auto max-w-6xl p-5 sm:p-8">
+          <SkeletonPage />
+        </div>
       </div>
     );
   }
+
+  const isSuper = user.role === "superadmin";
+  const visibleNav = nav.filter((n) => !n.superOnly || isSuper);
 
   async function handleLogout() {
     await logout();
@@ -60,8 +79,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </div>
 
+        {isSuper && (
+          <p className="-mt-2 px-5 pb-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-light px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
+              <ShieldCheck className="h-3 w-3" /> Superadmin
+            </span>
+          </p>
+        )}
+
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible lg:pb-0">
-          {nav.map(({ href, label, icon: Icon, exact }) => {
+          {visibleNav.map(({ href, label, icon: Icon, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link

@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
 
 const region = process.env.AWS_REGION;
@@ -80,4 +84,62 @@ export function validatePdf(
       maxBytes / (1024 * 1024)
     )}MB.`;
   return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Deleting                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Recover the object key from a stored public URL.
+ *
+ * Records created before we started saving `resumeKey` only have the URL,
+ * so this lets us still clean the old file out of the bucket. Returns null
+ * if the URL doesn't look like it belongs to our bucket.
+ */
+export function keyFromUrl(url?: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const path = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
+    if (!path) return null;
+
+    // Path-style URL: https://s3.<region>.amazonaws.com/<bucket>/<key>
+    if (bucket && path.startsWith(`${bucket}/`)) {
+      return path.slice(bucket.length + 1);
+    }
+    return path;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Remove an object from the bucket. Never throws — a failed cleanup must
+ * not fail the request that replaced the file, so problems are logged and
+ * `false` is returned instead.
+ */
+export async function deleteFromS3(key?: string | null): Promise<boolean> {
+  if (!key || !bucket || !isS3Configured()) return false;
+  try {
+    await getClient().send(
+      new DeleteObjectCommand({ Bucket: bucket, Key: key })
+    );
+    return true;
+  } catch (err) {
+    console.error("[s3] Could not delete", key, err);
+    return false;
+  }
+}
+
+/**
+ * Delete whichever of the two we can resolve — preferring the stored key
+ * and falling back to parsing the old URL.
+ */
+export async function deleteResume(
+  resumeKey?: string | null,
+  resumeUrl?: string | null
+): Promise<boolean> {
+  const key = resumeKey || keyFromUrl(resumeUrl);
+  return deleteFromS3(key);
 }

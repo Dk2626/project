@@ -21,7 +21,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 
 export async function PUT(req: Request, { params }: Ctx) {
   return handle(async () => {
-    requireAdmin();
+    await requireAdmin();
     if (!isValidObjectId(params.id)) return fail("Webinar not found.", 404);
     const body = await req.json();
     await connectDB();
@@ -36,7 +36,7 @@ export async function PUT(req: Request, { params }: Ctx) {
 
 export async function DELETE(_req: Request, { params }: Ctx) {
   return handle(async () => {
-    requireAdmin();
+    await requireAdmin();
     if (!isValidObjectId(params.id)) return fail("Webinar not found.", 404);
     await connectDB();
     const webinar = await Webinar.findByIdAndDelete(params.id);

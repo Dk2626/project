@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Briefcase, MapPin, Building2, Eye, EyeOff } from 
 import { Modal } from "@/components/ui/Modal";
 import { ApprovalNotice } from "@/components/ApprovalNotice";
 import { api } from "@/lib/client";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import type { JobItem, ApprovalStatus } from "@/lib/types";
 
 const JOB_TYPES = ["Full Time", "Part Time", "Internship", "Contract", "Remote"];
@@ -124,7 +125,7 @@ export default function RecruiterJobsPage() {
   }
 
   if (loading) {
-    return <div className="h-40 animate-pulse rounded-xl bg-white" />;
+    return <SkeletonList rows={4} />;
   }
 
   if (status !== "approved") {

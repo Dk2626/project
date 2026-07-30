@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Video, Calendar, Clock, Eye, EyeOff } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { FormInput, FormTextarea } from "@/components/ui/Form";
 import { api } from "@/lib/client";
 import type { WebinarItem } from "@/lib/types";
@@ -129,7 +130,7 @@ export default function AdminWebinarsPage() {
 
       <div className="mt-6 space-y-3">
         {loading ? (
-          [0, 1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-white" />)
+          <SkeletonList rows={4} />
         ) : webinars.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <Video className="mx-auto h-10 w-10 text-slate-300" />

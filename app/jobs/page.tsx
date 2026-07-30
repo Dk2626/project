@@ -7,6 +7,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ApplyButton } from "@/components/ApplyButton";
 import { api } from "@/lib/client";
+import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
 import { useAuth } from "@/components/AuthProvider";
 import type { JobItem, ApplicationItem } from "@/lib/types";
 
@@ -92,7 +93,16 @@ export default function JobsPage() {
           {loading ? (
             <div className="space-y-4">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-28 animate-pulse rounded-xl bg-white" />
+                <SkeletonCard key={i}>
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="h-11 w-11 shrink-0 rounded-lg" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-3 w-1/3" />
+                      <Skeleton className="h-3 w-2/3" />
+                    </div>
+                  </div>
+                </SkeletonCard>
               ))}
             </div>
           ) : filtered.length === 0 ? (

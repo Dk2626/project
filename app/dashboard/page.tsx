@@ -16,6 +16,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ProfileCard } from "@/components/ProfileCard";
+import { SkeletonPage, SkeletonList } from "@/components/ui/Skeleton";
 import { api } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
 import type { ApplicationItem } from "@/lib/types";
@@ -76,7 +77,7 @@ export default function DashboardPage() {
         <Navbar />
         <main className="min-h-screen bg-light">
           <div className="container-page py-16">
-            <div className="h-40 animate-pulse rounded-2xl bg-white" />
+            <SkeletonPage />
           </div>
         </main>
         <Footer />
@@ -143,14 +144,7 @@ export default function DashboardPage() {
           </div>
 
           {loading ? (
-            <div className="space-y-3">
-              {[0, 1].map((i) => (
-                <div
-                  key={i}
-                  className="h-24 animate-pulse rounded-xl bg-white"
-                />
-              ))}
-            </div>
+            <SkeletonList rows={3} />
           ) : list.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
               {tab === "job" ? (

@@ -13,7 +13,7 @@ type Ctx = { params: { id: string } };
 /** Admin: one recruiter + all of their jobs and applicants (full history). */
 export async function GET(_req: Request, { params }: Ctx) {
   return handle(async () => {
-    requireAdmin();
+    await requireAdmin();
     if (!isValidObjectId(params.id)) return fail("Recruiter not found.", 404);
     await connectDB();
 
@@ -52,7 +52,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 /** Admin: approve / reject / revoke a recruiter's access. */
 export async function PUT(req: Request, { params }: Ctx) {
   return handle(async () => {
-    requireAdmin();
+    await requireAdmin();
     if (!isValidObjectId(params.id)) return fail("Recruiter not found.", 404);
 
     const { approvalStatus, rejectionReason } = await req.json();

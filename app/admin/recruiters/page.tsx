@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -18,6 +18,9 @@ import {
   Linkedin,
 } from "lucide-react";
 import { api } from "@/lib/client";
+import { usePaginatedList } from "@/lib/usePaginatedList";
+import { Pagination } from "@/components/ui/Pagination";
+import { SkeletonRecordList } from "@/components/ui/Skeleton";
 import type { RecruiterRecord, ApprovalStatus } from "@/lib/types";
 
 type Filter = "all" | ApprovalStatus;
@@ -64,20 +67,15 @@ function Meta({ icon: Icon, label, value }: { icon: any; label: string; value?: 
 }
 
 export default function AdminRecruitersPage() {
-  const [recruiters, setRecruiters] = useState<RecruiterRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  function load() {
-    setLoading(true);
-    api<RecruiterRecord[]>("/api/admin/recruiters")
-      .then(setRecruiters)
-      .catch(() => setRecruiters([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(load, []);
+  // One page at a time — the approval-state counts come back from the API
+  // alongside the rows, so the tab labels stay accurate across pages.
+  const list = usePaginatedList<RecruiterRecord>({
+    path: "/api/admin/recruiters",
+    params: { status: filter === "all" ? undefined : filter },
+  });
 
   async function setStatus(id: string, approvalStatus: ApprovalStatus) {
     if (
@@ -89,45 +87,26 @@ export default function AdminRecruitersPage() {
       return;
 
     setBusyId(id);
-    setRecruiters((prev) =>
-      prev.map((r) => (r._id === id ? { ...r, approvalStatus } : r))
-    );
+    // Optimistic — flip the badge straight away, roll back on failure.
+    list.patchItem((r) => r._id === id, { approvalStatus });
     try {
       await api(`/api/admin/recruiters/${id}`, {
         method: "PUT",
         body: JSON.stringify({ approvalStatus }),
       });
+      // Refresh so the tab counts (and the current filter) stay correct.
+      list.reload();
     } catch {
       alert("Could not update this recruiter.");
-      load();
+      list.reload();
     } finally {
       setBusyId(null);
     }
   }
 
-  const counts = {
-    all: recruiters.length,
-    pending: recruiters.filter((r) => (r.approvalStatus ?? "pending") === "pending").length,
-    approved: recruiters.filter((r) => r.approvalStatus === "approved").length,
-    rejected: recruiters.filter((r) => r.approvalStatus === "rejected").length,
-  };
+  const counts = list.counts;
 
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return recruiters
-      .filter((r) => filter === "all" || (r.approvalStatus ?? "pending") === filter)
-      .filter((r) => {
-        if (!q) return true;
-        return (
-          `${r.firstName} ${r.lastName}`.toLowerCase().includes(q) ||
-          (r.email ?? "").toLowerCase().includes(q) ||
-          (r.companyName ?? "").toLowerCase().includes(q) ||
-          (r.phone ?? "").toLowerCase().includes(q)
-        );
-      });
-  }, [recruiters, query, filter]);
-
-  const tabs: { key: Filter; label: string; count: number }[] = [
+  const tabs: { key: Filter; label: string; count?: number }[] = [
     { key: "all", label: "All", count: counts.all },
     { key: "pending", label: "Pending", count: counts.pending },
     { key: "approved", label: "Approved", count: counts.approved },
@@ -141,7 +120,7 @@ export default function AdminRecruitersPage() {
         Approve recruiter accounts and review the jobs and applicants behind each one.
       </p>
 
-      {counts.pending > 0 && (
+      {(counts.pending ?? 0) > 0 && (
         <div className="mt-5 flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm">
           <Clock className="h-4 w-4 shrink-0 text-warning" />
           <span className="text-slate-700">
@@ -161,7 +140,8 @@ export default function AdminRecruitersPage() {
                 filter === t.key ? "bg-primary text-white" : "text-slate-600 hover:bg-light"
               }`}
             >
-              {t.label} ({t.count})
+              {t.label}
+              {t.count !== undefined && ` (${t.count})`}
             </button>
           ))}
         </div>
@@ -169,18 +149,18 @@ export default function AdminRecruitersPage() {
         <div className="relative sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={list.query}
+            onChange={(e) => list.setQuery(e.target.value)}
             placeholder="Search name, email or company"
             className="h-11 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
         </div>
       </div>
 
-      <div className="mt-5 space-y-3">
-        {loading ? (
-          [0, 1, 2].map((i) => <div key={i} className="h-40 animate-pulse rounded-xl bg-white" />)
-        ) : filtered.length === 0 ? (
+      <div className="mt-5">
+        {list.loading ? (
+          <SkeletonRecordList rows={4} />
+        ) : list.items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <Building2 className="mx-auto h-10 w-10 text-slate-300" />
             <p className="mt-4 font-heading text-lg font-semibold text-dark">No recruiters here</p>
@@ -189,9 +169,14 @@ export default function AdminRecruitersPage() {
             </p>
           </div>
         ) : (
-          filtered.map((r) => {
-            const status = (r.approvalStatus ?? "pending") as ApprovalStatus;
-            return (
+          <div
+            className={`space-y-3 transition-opacity ${
+              list.fetching ? "opacity-60" : ""
+            }`}
+          >
+            {list.items.map((r) => {
+              const status = (r.approvalStatus ?? "pending") as ApprovalStatus;
+              return (
               <div key={r._id} className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex items-start gap-4">
@@ -273,9 +258,21 @@ export default function AdminRecruitersPage() {
                   </Link>
                 </div>
               </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
+
+        <Pagination
+          page={list.page}
+          pages={list.pages}
+          total={list.total}
+          limit={list.limit}
+          onPageChange={list.setPage}
+          onLimitChange={list.setLimit}
+          busy={list.fetching}
+          label="recruiters"
+        />
       </div>
     </div>
   );

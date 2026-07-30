@@ -16,6 +16,7 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { ApprovalNotice } from "@/components/ApprovalNotice";
 import { api } from "@/lib/client";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import type { ApplicationItem, JobItem, ApprovalStatus } from "@/lib/types";
 
 const JOB_STATUSES = [
@@ -101,7 +102,7 @@ export default function RecruiterApplicantsPage() {
   }, [apps, query, jobFilter, statusFilter]);
 
   if (loading) {
-    return <div className="h-40 animate-pulse rounded-xl bg-white" />;
+    return <SkeletonList rows={4} />;
   }
 
   if (status !== "approved") {

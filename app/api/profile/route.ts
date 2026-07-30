@@ -13,10 +13,10 @@ export const dynamic = "force-dynamic";
  *   - email    (unique account identifier — must not change)
  *   - password (changed via a dedicated flow, not here)
  *   - role     (a student can never promote themselves)
- *   - resumeUrl / resumeKey (managed by the upload flow)
+ *   - resumeUrl / resumeKey (managed by /api/profile/resume)
  *   - _id, createdAt, updatedAt (system managed)
  */
-const EDITABLE_FIELDS = [
+const STUDENT_FIELDS = [
   "firstName",
   "lastName",
   "phone",
@@ -40,6 +40,33 @@ const EDITABLE_FIELDS = [
   "github",
 ] as const;
 
+/**
+ * What a recruiter may change about themselves from their profile page.
+ * Note the absence of approvalStatus — a recruiter can never approve
+ * themselves; only an admin can flip that.
+ */
+const RECRUITER_FIELDS = [
+  "firstName",
+  "lastName",
+  "phone",
+  "designation",
+  "companyName",
+  "companyWebsite",
+  "companyLocation",
+  "industry",
+  "companySize",
+  "companyAbout",
+  "linkedin",
+] as const;
+
+const ADMIN_FIELDS = ["firstName", "lastName", "phone"] as const;
+
+function editableFields(role: string): readonly string[] {
+  if (role === "recruiter") return RECRUITER_FIELDS;
+  if (role === "admin" || role === "superadmin") return ADMIN_FIELDS;
+  return STUDENT_FIELDS;
+}
+
 // GET: the signed-in user's own full profile (no password).
 export async function GET() {
   return handle(async () => {
@@ -62,7 +89,7 @@ export async function PUT(req: Request) {
     // sends (email, role, password, _id, …) is silently ignored — a user
     // cannot change their identifier or elevate their own role here.
     const update: Record<string, any> = {};
-    for (const key of EDITABLE_FIELDS) {
+    for (const key of editableFields(session.role)) {
       if (key in body) {
         const val = body[key];
         update[key] = typeof val === "string" ? val.trim() : val;
@@ -73,6 +100,12 @@ export async function PUT(req: Request) {
       return fail("First name cannot be empty.");
     if ("lastName" in update && update.lastName === "")
       return fail("Last name cannot be empty.");
+    if (
+      session.role === "recruiter" &&
+      "companyName" in update &&
+      !update.companyName
+    )
+      return fail("Company name cannot be empty.");
 
     await connectDB();
 

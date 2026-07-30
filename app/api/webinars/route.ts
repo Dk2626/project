@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   return handle(async () => {
-    requireAdmin();
+    await requireAdmin();
     const body = await req.json();
     if (!body.title?.trim()) return fail("Webinar title is required.");
     if (!body.speaker?.trim()) return fail("Speaker is required.");
