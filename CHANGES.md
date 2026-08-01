@@ -159,3 +159,71 @@ applicants, public jobs list + detail, webinars, and the navbar.
 Recruiter applicants and recruiter jobs are still filtered client-side —
 per-recruiter datasets are small, and the API already supports `?page=` if you
 want them switched over. Say the word.
+
+---
+
+## Student consultation form
+
+A student (or a logged-out visitor) can send a consultation request from
+`/consultation`; admins **and** superadmins read and reply to them at
+`/admin/consultations`.
+
+**New model:** `models/Consultation.ts`
+
+| Field | Notes |
+|---|---|
+| `user` | Set only when a signed-in **student** submits — this is what links a request to a student record and lets them see the reply |
+| `name` / `email` / `phone` | Stored on the document so a logged-out visitor is still contactable |
+| `studentType`, `institution` | School / College / Other + where they study |
+| `topic`, `preferredMode`, `preferredTime` | Career Guidance, Course Selection, … / Email, Phone Call, Video Call / free text |
+| `message` | Required, 10–4000 characters |
+| `status` | `New → In Progress → Responded → Closed` |
+| `response` | The team's reply — **visible to the student** |
+| `internalNote` | Admin-only, never returned by the student endpoint |
+| `handledBy`, `respondedAt` | Who last touched it, and when a reply was written |
+
+Indexed on `status + createdAt` and `createdAt` so the admin list paginates
+without a collection scan.
+
+**New endpoints:**
+
+| Method | Route | Access | Purpose |
+|---|---|---|---|
+| POST | `/api/consultations` | public | Submit a request |
+| GET | `/api/consultations` | logged in | The student's own requests (internal note stripped) |
+| GET | `/api/admin/consultations` | admin + superadmin | Paginated, searchable, `?status=` filtered, with tab counts |
+| GET | `/api/admin/consultations/[id]` | admin + superadmin | One request in full |
+| PATCH | `/api/admin/consultations/[id]` | admin + superadmin | Status, reply, internal note |
+| DELETE | `/api/admin/consultations/[id]` | **superadmin only** | Remove a request |
+
+POST is deliberately open so someone can ask a question before registering.
+It still validates name / email / message length, and refuses a second
+request from the same address inside 60 seconds so a double-click doesn't
+duplicate the row. An admin or recruiter submitting the form is **not**
+linked via `user` — only students are.
+
+**New screens:**
+
+- `/consultation` — public page: the form (pre-filled from the profile when
+  signed in) plus **My requests**, which shows each request's status and the
+  team's reply. The requests block only renders for a signed-in student.
+- `/admin/consultations` — tabs (All / New / In Progress / Responded /
+  Closed) with live counts, debounced server-side search across name, email,
+  phone, institution, message and topic, and the shared `Pagination` control.
+  Each card has an inline status dropdown, a reply box, an internal note box,
+  a `mailto:` shortcut and — for a registered sender — a link straight to
+  their CV. Saving a non-empty reply flips the status to **Responded**
+  automatically unless the request is already Closed. Delete shows only for
+  a superadmin.
+
+**Wiring:**
+
+- `app/admin/layout.tsx` — "Consultations" sidebar entry (both admin tiers).
+- `lib/data.ts` — "Consultation" added to the public navbar.
+- `app/api/admin/stats/route.ts` — returns `consultations` and
+  `newConsultations`.
+- `app/admin/page.tsx` — a Consultations stat tile, a banner when unanswered
+  requests are waiting, and a summary card.
+- `app/dashboard/page.tsx` — a CTA pointing students at `/consultation`.
+- `components/StatusBadge.tsx` — colours for the four consultation statuses.
+- `lib/types.ts` — `ConsultationRecord`, `ConsultationStatus`.

@@ -151,3 +151,58 @@ export interface RecruiterRecord {
   activeJobCount?: number;
   applicantCount?: number;
 }
+
+/* ------------------------------------------------------------------ */
+/* Consultations                                                       */
+/* ------------------------------------------------------------------ */
+
+export const CONSULTATION_STATUSES = [
+  "New",
+  "In Progress",
+  "Responded",
+  "Closed",
+] as const;
+
+export type ConsultationStatus = (typeof CONSULTATION_STATUSES)[number];
+
+/**
+ * A consultation request sent from the public consultation form.
+ *
+ * `internalNote` and `handledBy` are stripped by the student-facing
+ * `/api/consultations` route and only ever populated for admins.
+ */
+export interface ConsultationRecord {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  studentType?: "School Student" | "College Student" | "Other";
+  institution?: string;
+  topic: string;
+  preferredMode?: "Email" | "Phone Call" | "Video Call";
+  preferredTime?: string;
+  message: string;
+  status: ConsultationStatus;
+  response?: string;
+  respondedAt?: string;
+  createdAt?: string;
+  /** Admin view only. */
+  internalNote?: string;
+  /** Populated when the sender was a signed-in student. */
+  user?:
+    | string
+    | {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone?: string;
+        resumeUrl?: string;
+        studentType?: string;
+      }
+    | null;
+  handledBy?:
+    | string
+    | { _id: string; firstName: string; lastName: string; email: string }
+    | null;
+}

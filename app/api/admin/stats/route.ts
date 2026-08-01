@@ -3,6 +3,7 @@ import { User } from "@/models/User";
 import { Job } from "@/models/Job";
 import { Webinar } from "@/models/Webinar";
 import { Application } from "@/models/Application";
+import { Consultation } from "@/models/Consultation";
 import { ok, handle, requireAdmin } from "@/lib/api";
 
 export const runtime = "nodejs";
@@ -23,6 +24,8 @@ export async function GET() {
       pendingRecruiters,
       recruiterJobs,
       admins,
+      consultations,
+      newConsultations,
     ] = await Promise.all([
       User.countDocuments({ role: "student" }),
       Job.countDocuments(),
@@ -33,6 +36,8 @@ export async function GET() {
       User.countDocuments({ role: "recruiter", approvalStatus: "pending" }),
       Job.countDocuments({ postedByRole: "recruiter" }),
       User.countDocuments({ role: { $in: ["admin", "superadmin"] } }),
+      Consultation.countDocuments(),
+      Consultation.countDocuments({ status: "New" }),
     ]);
 
     return ok({
@@ -43,6 +48,8 @@ export async function GET() {
       pendingRecruiters,
       recruiterJobs,
       admins,
+      consultations,
+      newConsultations,
       jobApplications: jobApps,
       webinarApplications: webinarApps,
       totalApplications: jobApps + webinarApps,

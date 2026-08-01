@@ -11,6 +11,8 @@ import {
   Clock,
   Building2,
   Trash2,
+  MessageSquare,
+  ArrowRight,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -120,6 +122,19 @@ export default function DashboardPage() {
                 value={apps.length}
               />
             </div>
+
+            {/* Ask the counselling team a question. */}
+            <Link
+              href="/consultation"
+              className="mt-4 flex items-center gap-3 rounded-lg border border-primary/30 bg-white px-4 py-3 text-sm shadow-sm hover:border-primary/60"
+            >
+              <MessageSquare className="h-4 w-4 shrink-0 text-primary" />
+              <span className="text-slate-700">
+                Need guidance? Send the URAV team a consultation request and
+                track their reply.
+              </span>
+              <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary" />
+            </Link>
           </div>
         </section>
 

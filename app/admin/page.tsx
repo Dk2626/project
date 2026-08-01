@@ -12,6 +12,7 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -25,6 +26,8 @@ interface Stats {
   pendingRecruiters: number;
   recruiterJobs: number;
   admins: number;
+  consultations: number;
+  newConsultations: number;
   jobApplications: number;
   webinarApplications: number;
   totalApplications: number;
@@ -48,6 +51,12 @@ export default function AdminOverview() {
     { label: "Recruiters", value: stats?.recruiters, icon: Building2, href: "/admin/recruiters" },
     { label: "Jobs Posted", value: stats?.jobs, icon: Briefcase, href: "/admin/jobs" },
     { label: "Webinars", value: stats?.webinars, icon: Video, href: "/admin/webinars" },
+    {
+      label: "Consultations",
+      value: stats?.consultations,
+      icon: MessageSquare,
+      href: "/admin/consultations",
+    },
     {
       label: "Total Applications",
       value: stats?.totalApplications,
@@ -89,9 +98,24 @@ export default function AdminOverview() {
         </Link>
       )}
 
+      {!loading && (stats?.newConsultations ?? 0) > 0 && (
+        <Link
+          href="/admin/consultations"
+          className="mt-3 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary-light/60 px-4 py-3 text-sm hover:bg-primary-light"
+        >
+          <MessageSquare className="h-4 w-4 shrink-0 text-primary" />
+          <span className="text-slate-700">
+            {stats?.newConsultations} new consultation request
+            {stats?.newConsultations === 1 ? "" : "s"} from students — read and
+            reply.
+          </span>
+          <ArrowRight className="ml-auto h-4 w-4 text-primary" />
+        </Link>
+      )}
+
       {loading ? (
         <div className="mt-6">
-          <SkeletonStats count={isSuper ? 6 : 5} />
+          <SkeletonStats count={isSuper ? 7 : 6} />
         </div>
       ) : (
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -164,6 +188,32 @@ export default function AdminOverview() {
             className="mt-4 inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover"
           >
             Manage recruiters
+          </Link>
+        </div>
+
+        <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary-light text-primary">
+              <MessageSquare className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="font-heading font-semibold text-dark">
+                Student consultations
+              </p>
+              <p className="text-sm text-slate-500">
+                {loading ? (
+                  <Skeleton className="inline-block h-3.5 w-32 align-middle" />
+                ) : (
+                  `${stats?.newConsultations ?? 0} awaiting a first reply`
+                )}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/consultations"
+            className="mt-4 inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover"
+          >
+            View requests
           </Link>
         </div>
 

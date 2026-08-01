@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Building2,
   ShieldCheck,
+  MessageSquare,
   LogOut,
   ExternalLink,
 } from "lucide-react";
@@ -31,6 +32,11 @@ const nav = [
   { href: "/admin/jobs", label: "Jobs", icon: Briefcase },
   { href: "/admin/webinars", label: "Webinars", icon: Video },
   { href: "/admin/applications", label: "Applications", icon: Users },
+  {
+    href: "/admin/consultations",
+    label: "Consultations",
+    icon: MessageSquare,
+  },
   {
     href: "/admin/admins",
     label: "Admins",
