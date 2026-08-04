@@ -10,6 +10,16 @@ const bucket = process.env.AWS_S3_BUCKET;
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
+/**
+ * Hero/banner images can live in their own bucket (they are public, while
+ * resumes usually are not). If AWS_S3_HERO_BUCKET isn't set we fall back to
+ * the main bucket and just keep the images under the `hero/` prefix.
+ */
+const heroBucket = process.env.AWS_S3_HERO_BUCKET || bucket;
+
+export const RESUME_BUCKET = bucket;
+export const HERO_BUCKET = heroBucket;
+
 let _client: S3Client | null = null;
 
 function getClient(): S3Client {
@@ -27,8 +37,20 @@ function getClient(): S3Client {
   return _client;
 }
 
-export function isS3Configured(): boolean {
-  return Boolean(region && bucket && accessKeyId && secretAccessKey);
+/** True when the given bucket (default: the resume bucket) is usable. */
+export function isS3Configured(bucketName = bucket): boolean {
+  return Boolean(region && bucketName && accessKeyId && secretAccessKey);
+}
+
+/** Public base URL for a bucket — CDN/custom domain when one is configured. */
+function publicBase(bucketName: string): string {
+  if (bucketName === heroBucket && process.env.AWS_S3_HERO_PUBLIC_BASE_URL) {
+    return process.env.AWS_S3_HERO_PUBLIC_BASE_URL;
+  }
+  if (bucketName === bucket && process.env.AWS_S3_PUBLIC_BASE_URL) {
+    return process.env.AWS_S3_PUBLIC_BASE_URL;
+  }
+  return `https://${bucketName}.s3.${region}.amazonaws.com`;
 }
 
 export interface UploadResult {
@@ -44,9 +66,10 @@ export async function uploadToS3(
   buffer: Buffer,
   originalName: string,
   contentType: string,
-  folder = "resumes"
+  folder = "resumes",
+  bucketName: string | undefined = bucket
 ): Promise<UploadResult> {
-  if (!bucket) {
+  if (!bucketName) {
     throw new Error("AWS_S3_BUCKET is not set.");
   }
 
@@ -56,19 +79,16 @@ export async function uploadToS3(
 
   await client.send(
     new PutObjectCommand({
-      Bucket: bucket,
+      Bucket: bucketName,
       Key: key,
       Body: buffer,
       ContentType: contentType,
+      // Hero images are static marketing assets — let the CDN hold on to them.
+      CacheControl: folder === "hero" ? "public, max-age=31536000, immutable" : undefined,
     })
   );
 
-  // If you serve files through a CDN/custom domain, set AWS_S3_PUBLIC_BASE_URL.
-  const base =
-    process.env.AWS_S3_PUBLIC_BASE_URL ??
-    `https://${bucket}.s3.${region}.amazonaws.com`;
-
-  return { url: `${base}/${key}`, key };
+  return { url: `${publicBase(bucketName)}/${key}`, key };
 }
 
 /** Validate an uploaded file is a PDF within the size limit. */
@@ -86,6 +106,34 @@ export function validatePdf(
   return null;
 }
 
+export const IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/gif",
+];
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif"];
+
+/** Validate an uploaded file is a web-safe image within the size limit. */
+export function validateImage(
+  file: { type: string; size: number; name: string },
+  maxBytes = 8 * 1024 * 1024
+): string | null {
+  const name = file.name.toLowerCase();
+  const looksLikeImage =
+    IMAGE_MIME_TYPES.includes(file.type) ||
+    IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext));
+  if (!looksLikeImage)
+    return "Only JPG, PNG, WebP, AVIF or GIF images are allowed.";
+  if (file.size > maxBytes)
+    return `Image is too large. Maximum size is ${Math.round(
+      maxBytes / (1024 * 1024)
+    )}MB.`;
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /* Deleting                                                            */
 /* ------------------------------------------------------------------ */
@@ -97,16 +145,21 @@ export function validatePdf(
  * so this lets us still clean the old file out of the bucket. Returns null
  * if the URL doesn't look like it belongs to our bucket.
  */
-export function keyFromUrl(url?: string | null): string | null {
+export function keyFromUrl(
+  url?: string | null,
+  bucketName: string | undefined = bucket
+): string | null {
   if (!url) return null;
+  // Slides seeded with the built-in defaults point at /public, not at S3.
+  if (url.startsWith("/")) return null;
   try {
     const parsed = new URL(url);
     const path = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
     if (!path) return null;
 
     // Path-style URL: https://s3.<region>.amazonaws.com/<bucket>/<key>
-    if (bucket && path.startsWith(`${bucket}/`)) {
-      return path.slice(bucket.length + 1);
+    if (bucketName && path.startsWith(`${bucketName}/`)) {
+      return path.slice(bucketName.length + 1);
     }
     return path;
   } catch {
@@ -119,11 +172,14 @@ export function keyFromUrl(url?: string | null): string | null {
  * not fail the request that replaced the file, so problems are logged and
  * `false` is returned instead.
  */
-export async function deleteFromS3(key?: string | null): Promise<boolean> {
-  if (!key || !bucket || !isS3Configured()) return false;
+export async function deleteFromS3(
+  key?: string | null,
+  bucketName: string | undefined = bucket
+): Promise<boolean> {
+  if (!key || !bucketName || !isS3Configured(bucketName)) return false;
   try {
     await getClient().send(
-      new DeleteObjectCommand({ Bucket: bucket, Key: key })
+      new DeleteObjectCommand({ Bucket: bucketName, Key: key })
     );
     return true;
   } catch (err) {

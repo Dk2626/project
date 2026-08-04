@@ -2,7 +2,7 @@ import { features } from "@/lib/data";
 
 export function FeatureStrip() {
   return (
-    <section className="container-page -mt-8 pb-4">
+    <section className="container-page mt-6 pb-4">
       <div className="grid gap-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-md sm:grid-cols-2 lg:grid-cols-4">
         {features.map(({ icon: Icon, title, description }) => (
           <div key={title} className="flex items-center gap-4">

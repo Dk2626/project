@@ -12,6 +12,7 @@ import {
   Building2,
   ShieldCheck,
   MessageSquare,
+  Images,
   LogOut,
   ExternalLink,
 } from "lucide-react";
@@ -36,6 +37,12 @@ const nav = [
     href: "/admin/consultations",
     label: "Consultations",
     icon: MessageSquare,
+  },
+  {
+    href: "/admin/hero",
+    label: "Home slider",
+    icon: Images,
+    superOnly: true,
   },
   {
     href: "/admin/admins",

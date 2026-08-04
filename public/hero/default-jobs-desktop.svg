@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 620" width="1600" height="620" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Job opportunities">
+  <defs>
+    <linearGradient id="jbg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#082C57"/>
+      <stop offset="60%" stop-color="#0B3E77"/>
+      <stop offset="100%" stop-color="#1E5FA8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="620" fill="url(#jbg)"/>
+  <g opacity="0.08" stroke="#FFFFFF" stroke-width="1">
+    <path d="M900 0 V620 M1050 0 V620 M1200 0 V620 M1350 0 V620 M1500 0 V620"/>
+    <path d="M860 120 H1600 M860 260 H1600 M860 400 H1600 M860 540 H1600"/>
+  </g>
+  <g transform="translate(940 150)">
+    <rect width="300" height="120" rx="14" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="2"/>
+    <rect x="24" y="26" width="150" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.6"/>
+    <rect x="24" y="54" width="96" height="10" rx="5" fill="#FFFFFF" fill-opacity="0.32"/>
+    <rect x="24" y="82" width="70" height="20" rx="10" fill="#22C55E" fill-opacity="0.55"/>
+  </g>
+  <g transform="translate(1050 320)">
+    <rect width="300" height="120" rx="14" fill="#FFFFFF" fill-opacity="0.10" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="2"/>
+    <rect x="24" y="26" width="130" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.45"/>
+    <rect x="24" y="54" width="110" height="10" rx="5" fill="#FFFFFF" fill-opacity="0.25"/>
+    <rect x="24" y="82" width="70" height="20" rx="10" fill="#FFFFFF" fill-opacity="0.22"/>
+  </g>
+  <g transform="translate(1350 210)" opacity="0.5">
+    <path d="M0 40 h96 a10 10 0 0 1 10 10 v70 a10 10 0 0 1 -10 10 h-96 a10 10 0 0 1 -10 -10 v-70 a10 10 0 0 1 10 -10 z" fill="#FFFFFF" fill-opacity="0.18"/>
+    <path d="M32 40 v-14 a12 12 0 0 1 12 -12 h8 a12 12 0 0 1 12 12 v14" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="6"/>
+  </g>
+  <rect y="0" width="820" height="620" fill="#06192E" fill-opacity="0.45"/>
+</svg>

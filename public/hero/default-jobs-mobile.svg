@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Job opportunities">
+  <defs>
+    <linearGradient id="jbgm" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#1E5FA8"/>
+      <stop offset="50%" stop-color="#0B3E77"/>
+      <stop offset="100%" stop-color="#082C57"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#jbgm)"/>
+  <g opacity="0.08" stroke="#FFFFFF" stroke-width="1">
+    <path d="M160 0 V1000 M320 0 V1000 M480 0 V1000 M640 0 V1000"/>
+    <path d="M0 160 H800 M0 320 H800 M0 480 H800 M0 640 H800"/>
+  </g>
+  <g transform="translate(120 150)">
+    <rect width="300" height="120" rx="14" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="2"/>
+    <rect x="24" y="26" width="150" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.6"/>
+    <rect x="24" y="54" width="96" height="10" rx="5" fill="#FFFFFF" fill-opacity="0.32"/>
+    <rect x="24" y="82" width="70" height="20" rx="10" fill="#22C55E" fill-opacity="0.55"/>
+  </g>
+  <g transform="translate(300 320)">
+    <rect width="300" height="120" rx="14" fill="#FFFFFF" fill-opacity="0.10" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="2"/>
+    <rect x="24" y="26" width="130" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.45"/>
+    <rect x="24" y="54" width="110" height="10" rx="5" fill="#FFFFFF" fill-opacity="0.25"/>
+    <rect x="24" y="82" width="70" height="20" rx="10" fill="#FFFFFF" fill-opacity="0.22"/>
+  </g>
+  <rect y="480" width="800" height="520" fill="#06192E" fill-opacity="0.45"/>
+</svg>

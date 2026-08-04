@@ -55,6 +55,28 @@ export interface JobItem {
     | null;
 }
 
+/** A slide in the homepage hero slider. */
+export interface HeroSlideItem {
+  _id: string;
+  title: string;
+  description?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  /** Wide banner, used from the `md` breakpoint up. */
+  desktopImageUrl: string;
+  desktopImageKey?: string;
+  /** Taller crop for phones. Falls back to the desktop image when empty. */
+  mobileImageUrl?: string;
+  mobileImageKey?: string;
+  /** "light" = white copy over a dark scrim; "dark" = navy copy over a light one. */
+  textTone?: "light" | "dark";
+  order?: number;
+  active?: boolean;
+  createdAt?: string;
+}
+
 export interface WebinarItem {
   _id: string;
   title: string;

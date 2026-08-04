@@ -227,3 +227,129 @@ linked via `user` — only students are.
 - `app/dashboard/page.tsx` — a CTA pointing students at `/consultation`.
 - `components/StatusBadge.tsx` — colours for the four consultation statuses.
 - `lib/types.ts` — `ConsultationRecord`, `ConsultationStatus`.
+
+---
+
+## 8 · Homepage hero is now a managed slider
+
+`components/Hero.tsx` was a single hardcoded panel. It is now a slider whose
+slides live in MongoDB and whose images live in S3, managed from a
+**superadmin-only** dashboard screen.
+
+**Each slide holds:** a title (line breaks preserved), a description, up to
+two buttons (label + link), a **website image**, a **mobile image**, a text
+colour, a display position and a show/hide flag.
+
+### New model — `models/HeroSlide.ts`
+
+| Field | Notes |
+|---|---|
+| `title` | Required. `\n` renders as a line break in the slider. |
+| `description` | Optional paragraph under the title. |
+| `ctaLabel` / `ctaHref` | Filled navy button. Renders only when both are set. |
+| `secondaryCtaLabel` / `secondaryCtaHref` | Outline button, same rule. |
+| `desktopImageUrl` / `desktopImageKey` | Required. Used from `md` (768px) up. |
+| `mobileImageUrl` / `mobileImageKey` | Optional. Used below 768px; falls back to the desktop image. |
+| `textTone` | `light` (white copy + dark scrim) or `dark` (navy copy + light scrim). |
+| `order` | Ascending display position; ties break on `createdAt`. |
+| `active` | Hidden slides stay in the dashboard but leave the site. |
+
+Indexed on `{ active, order, createdAt }` — the homepage query hits it directly.
+
+The **key** is stored alongside every URL so replacing an image can delete the
+old object from the bucket instead of leaking it.
+
+### New endpoints
+
+| Method | Route | Who |
+|---|---|---|
+| GET | `/api/hero-slides` | Public — active slides in order |
+| GET | `/api/hero-slides?all=1` | Public — includes hidden ones (dashboard) |
+| POST | `/api/hero-slides` | **Superadmin** — multipart create |
+| PUT | `/api/hero-slides/[id]` | **Superadmin** — multipart (image change) or JSON (fields only) |
+| DELETE | `/api/hero-slides/[id]` | **Superadmin** — also deletes both images from S3 |
+| PUT | `/api/hero-slides/reorder` | **Superadmin** — `{ ids: [...] }`, position becomes `order` |
+| POST | `/api/hero-slides/seed` | **Superadmin** — copies the built-in defaults into the DB |
+
+Ordering is sent as the whole list rather than as a two-row swap, so a
+half-applied reorder can't leave two slides fighting over one position.
+
+On an image replace the upload happens **first**, the new URL is saved, and
+only then is the old object deleted — a failure mid-way leaves the slide with
+its previous picture rather than none.
+
+### S3 — `lib/s3.ts`, `lib/heroImages.ts`
+
+- `uploadToS3` / `deleteFromS3` / `keyFromUrl` / `isS3Configured` now take an
+  optional bucket, so hero images can go to their **own** bucket while resumes
+  stay where they are. Existing callers are untouched.
+- `AWS_S3_HERO_BUCKET` — optional. Falls back to `AWS_S3_BUCKET`; either way
+  the images are keyed under the `hero/` prefix.
+- `AWS_S3_HERO_PUBLIC_BASE_URL` — optional CloudFront/custom domain.
+- `validateImage()` — JPG / PNG / WebP / AVIF / GIF, 8MB cap.
+- Hero uploads get `Cache-Control: public, max-age=31536000, immutable`. Safe
+  because every key carries a UUID, so a replacement is always a new URL.
+
+The hero bucket must be **publicly readable** (marketing images are loaded by
+every visitor's browser). Minimal policy for just the `hero/` prefix:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "PublicReadHeroImages",
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "s3:GetObject",
+    "Resource": "arn:aws:s3:::YOUR_HERO_BUCKET/hero/*"
+  }]
+}
+```
+
+The IAM user needs `s3:PutObject` and `s3:DeleteObject` on the same prefix.
+
+### Default slides
+
+`lib/heroDefaults.ts` holds three slides that render when the collection is
+empty, so the homepage is never blank on a fresh install:
+
+1. **Empowering Careers. Building Futures.** — the existing
+   `/hero-students.webp` photo and the original copy.
+2. **Webinars** — `/public/hero/default-webinars-*.svg` (new, brand navy).
+3. **Jobs** — `/public/hero/default-jobs-*.svg` (new, brand navy).
+
+Each has a desktop and a mobile variant. They are plain files, not database
+rows — the dashboard shows a **"Copy the built-in slides"** button that inserts
+them as editable rows when you want to keep the layout but change the wording.
+
+### The slider — `components/Hero.tsx`
+
+- Full-bleed banner: `540px` on phones, `500px` on tablets, `580px` on large
+  screens, with the copy over a gradient scrim.
+- `<picture>` with a `(max-width: 767px)` source, so a phone downloads **only**
+  the mobile image and a desktop **only** the wide one.
+- Autoplays every 6s; pauses on hover, on focus within, and when the tab is in
+  the background.
+- Arrows (desktop), dots, left/right keys, and touch swipe.
+- Honours `prefers-reduced-motion` — no autoplay, no slide transition.
+- Only the first slide uses `<h1>`; the rest use `<h2>` styled the same, so the
+  page keeps exactly one h1.
+- Inactive slides are `aria-hidden` and their buttons are `tabIndex={-1}`, so
+  tabbing doesn't wander into off-screen links. A visually-hidden live region
+  announces the current slide.
+- Shimmer skeleton while the slides load, matching the rest of the site.
+- The two headline numbers from the old hero (**120+ webinars**, **2.5K+
+  placed**) are kept as a small card row tucked under the slider. They're still
+  hardcoded — delete the `<Stat>` block in `Hero.tsx` if you don't want them.
+
+### New screen — `/admin/hero` ("Home slider")
+
+Superadmin-only, hidden from ordinary admins via the `superOnly` flag in
+`app/admin/layout.tsx` (the API enforces the same rule server-side). Ordinary
+admins who navigate to the URL directly get an access notice.
+
+Each row shows a desktop and a mobile thumbnail side by side, the title,
+description, position, buttons and text colour, with controls to move up/down,
+hide/show, edit and delete. The add/edit modal has both image pickers with live
+previews, a "Remove" action on the mobile image to fall back to the desktop
+one, and size hints (≈1600×620 wide, ≈800×1000 tall).

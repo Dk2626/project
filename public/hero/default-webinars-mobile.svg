@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Live webinar session">
+  <defs>
+    <linearGradient id="wbgm" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#154C8C"/>
+      <stop offset="45%" stop-color="#0B3E77"/>
+      <stop offset="100%" stop-color="#0A2540"/>
+    </linearGradient>
+    <radialGradient id="wglowm" cx="0.5" cy="0.3" r="0.6">
+      <stop offset="0%" stop-color="#5B8FD1" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#5B8FD1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#wbgm)"/>
+  <rect width="800" height="1000" fill="url(#wglowm)"/>
+  <g opacity="0.10" stroke="#FFFFFF" stroke-width="1.5" fill="none">
+    <circle cx="400" cy="300" r="150"/><circle cx="400" cy="300" r="240"/><circle cx="400" cy="300" r="330"/>
+  </g>
+  <g transform="translate(220 190)" opacity="0.95">
+    <rect width="360" height="228" rx="18" fill="#FFFFFF" fill-opacity="0.12" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="2"/>
+    <rect x="26" y="26" width="308" height="150" rx="10" fill="#FFFFFF" fill-opacity="0.10"/>
+    <path d="M160 78 l64 36 -64 36 z" fill="#FFFFFF" fill-opacity="0.85"/>
+    <circle cx="46" cy="202" r="7" fill="#EF4444"/>
+    <rect x="62" y="196" width="52" height="12" rx="6" fill="#FFFFFF" fill-opacity="0.55"/>
+  </g>
+  <g fill="#FFFFFF" fill-opacity="0.12">
+    <circle cx="150" cy="560" r="30"/><circle cx="640" cy="600" r="22"/>
+  </g>
+  <rect y="480" width="800" height="520" fill="#07203A" fill-opacity="0.45"/>
+</svg>
