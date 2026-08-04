@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { FormInput, FormTextarea } from "@/components/ui/Form";
+import { FormTextarea } from "@/components/ui/Form";
 import { useAuth } from "@/components/AuthProvider";
 import { api } from "@/lib/client";
 import type { HeroSlideItem } from "@/lib/types";
@@ -25,10 +25,6 @@ import type { HeroSlideItem } from "@/lib/types";
 const empty = {
   title: "",
   description: "",
-  ctaLabel: "",
-  ctaHref: "",
-  secondaryCtaLabel: "",
-  secondaryCtaHref: "",
   textTone: "light" as "light" | "dark",
   active: true,
 };
@@ -73,10 +69,6 @@ export default function AdminHeroPage() {
     setForm({
       title: slide.title,
       description: slide.description ?? "",
-      ctaLabel: slide.ctaLabel ?? "",
-      ctaHref: slide.ctaHref ?? "",
-      secondaryCtaLabel: slide.secondaryCtaLabel ?? "",
-      secondaryCtaHref: slide.secondaryCtaHref ?? "",
       textTone: slide.textTone === "dark" ? "dark" : "light",
       active: slide.active !== false,
     });
@@ -102,10 +94,6 @@ export default function AdminHeroPage() {
     const fd = new FormData();
     fd.append("title", form.title.trim());
     fd.append("description", form.description.trim());
-    fd.append("ctaLabel", form.ctaLabel.trim());
-    fd.append("ctaHref", form.ctaHref.trim());
-    fd.append("secondaryCtaLabel", form.secondaryCtaLabel.trim());
-    fd.append("secondaryCtaHref", form.secondaryCtaHref.trim());
     fd.append("textTone", form.textTone);
     fd.append("active", String(form.active));
     if (desktopFile) fd.append("desktopImage", desktopFile);
@@ -288,17 +276,6 @@ export default function AdminHeroPage() {
                   )}
                   <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
                     <span>Position {i + 1}</span>
-                    {slide.ctaLabel && (
-                      <span>
-                        {slide.ctaLabel} → {slide.ctaHref || "—"}
-                      </span>
-                    )}
-                    {slide.secondaryCtaLabel && (
-                      <span>
-                        {slide.secondaryCtaLabel} →{" "}
-                        {slide.secondaryCtaHref || "—"}
-                      </span>
-                    )}
                     <span>
                       {slide.textTone === "dark" ? "Dark copy" : "White copy"}
                     </span>
@@ -402,35 +379,6 @@ export default function AdminHeroPage() {
                 : undefined
             }
           />
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormInput
-              label="Button text"
-              value={form.ctaLabel}
-              onChange={(v) => setForm({ ...form, ctaLabel: v })}
-              placeholder="Explore Webinars"
-            />
-            <FormInput
-              label="Button link"
-              value={form.ctaHref}
-              onChange={(v) => setForm({ ...form, ctaHref: v })}
-              placeholder="/webinars"
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormInput
-              label="Second button text"
-              value={form.secondaryCtaLabel}
-              onChange={(v) => setForm({ ...form, secondaryCtaLabel: v })}
-              placeholder="Browse Jobs"
-            />
-            <FormInput
-              label="Second button link"
-              value={form.secondaryCtaHref}
-              onChange={(v) => setForm({ ...form, secondaryCtaHref: v })}
-              placeholder="/jobs"
-            />
-          </div>
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700">

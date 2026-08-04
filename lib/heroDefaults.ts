@@ -17,10 +17,6 @@ export const DEFAULT_HERO_SLIDES: HeroSlideItem[] = [
     title: "Empowering Careers.\nBuilding Futures.",
     description:
       "URAV is a corporate consulting and career platform that connects students, professionals and organizations through learning, webinars and job opportunities.",
-    ctaLabel: "Explore Webinars",
-    ctaHref: "/webinars",
-    secondaryCtaLabel: "Browse Jobs",
-    secondaryCtaHref: "/jobs",
     desktopImageUrl: "/hero-students.webp",
     mobileImageUrl: "/hero-students.webp",
     textTone: "light",
@@ -32,10 +28,6 @@ export const DEFAULT_HERO_SLIDES: HeroSlideItem[] = [
     title: "Learn from people who\nhave done the job.",
     description:
       "Live sessions with industry mentors on interviews, skills and career paths — free for every registered student.",
-    ctaLabel: "See upcoming webinars",
-    ctaHref: "/webinars",
-    secondaryCtaLabel: "",
-    secondaryCtaHref: "",
     desktopImageUrl: "/hero/default-webinars-desktop.svg",
     mobileImageUrl: "/hero/default-webinars-mobile.svg",
     textTone: "light",
@@ -47,10 +39,6 @@ export const DEFAULT_HERO_SLIDES: HeroSlideItem[] = [
     title: "Your next opportunity\nis already listed.",
     description:
       "Roles posted directly by verified recruiters. Build your profile once, then apply with a single click.",
-    ctaLabel: "Browse jobs",
-    ctaHref: "/jobs",
-    secondaryCtaLabel: "Create your profile",
-    secondaryCtaHref: "/register",
     desktopImageUrl: "/hero/default-jobs-desktop.svg",
     mobileImageUrl: "/hero/default-jobs-mobile.svg",
     textTone: "light",

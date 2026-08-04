@@ -17,13 +17,6 @@ const heroSlideSchema = new Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "", trim: true },
 
-    /** Primary call to action. Both parts must be set for the button to render. */
-    ctaLabel: { type: String, default: "", trim: true },
-    ctaHref: { type: String, default: "", trim: true },
-    /** Optional second, outline-styled button. */
-    secondaryCtaLabel: { type: String, default: "", trim: true },
-    secondaryCtaHref: { type: String, default: "", trim: true },
-
     desktopImageUrl: { type: String, required: true },
     desktopImageKey: { type: String, default: "" },
     mobileImageUrl: { type: String, default: "" },

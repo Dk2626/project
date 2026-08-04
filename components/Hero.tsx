@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { ChevronLeft, ChevronRight, Video, CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/client";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -10,9 +9,6 @@ import type { HeroSlideItem } from "@/lib/types";
 
 /** How long each slide stays up before advancing, in ms. */
 const AUTOPLAY_MS = 6000;
-
-const btnBase =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-md px-6 text-[15px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 export function Hero() {
   const [slides, setSlides] = useState<HeroSlideItem[] | null>(null);
@@ -168,33 +164,6 @@ export function Hero() {
                         {slide.description}
                       </p>
                     )}
-
-                    {(slide.ctaLabel || slide.secondaryCtaLabel) && (
-                      <div className="mt-8 flex flex-wrap gap-4">
-                        {slide.ctaLabel && slide.ctaHref && (
-                          <Link
-                            href={slide.ctaHref}
-                            tabIndex={active ? 0 : -1}
-                            className={`${btnBase} bg-primary text-white hover:bg-primary-hover focus-visible:ring-white/70`}
-                          >
-                            {slide.ctaLabel}
-                          </Link>
-                        )}
-                        {slide.secondaryCtaLabel && slide.secondaryCtaHref && (
-                          <Link
-                            href={slide.secondaryCtaHref}
-                            tabIndex={active ? 0 : -1}
-                            className={`${btnBase} ${
-                              light
-                                ? "border border-white/70 text-white hover:bg-white hover:text-dark focus-visible:ring-white/70"
-                                : "border border-slate-300 text-dark hover:bg-light focus-visible:ring-primary/50"
-                            }`}
-                          >
-                            {slide.secondaryCtaLabel}
-                          </Link>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -337,10 +306,6 @@ function HeroSkeleton() {
             <Skeleton className="h-10 w-2/3" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-5/6" />
-            <div className="flex gap-4 pt-4">
-              <Skeleton className="h-11 w-44 rounded-md" />
-              <Skeleton className="h-11 w-36 rounded-md" />
-            </div>
           </div>
         </div>
       </div>

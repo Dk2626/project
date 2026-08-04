@@ -60,10 +60,6 @@ export interface HeroSlideItem {
   _id: string;
   title: string;
   description?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-  secondaryCtaLabel?: string;
-  secondaryCtaHref?: string;
   /** Wide banner, used from the `md` breakpoint up. */
   desktopImageUrl: string;
   desktopImageKey?: string;

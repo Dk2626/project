@@ -334,9 +334,8 @@ them as editable rows when you want to keep the layout but change the wording.
 - Honours `prefers-reduced-motion` — no autoplay, no slide transition.
 - Only the first slide uses `<h1>`; the rest use `<h2>` styled the same, so the
   page keeps exactly one h1.
-- Inactive slides are `aria-hidden` and their buttons are `tabIndex={-1}`, so
-  tabbing doesn't wander into off-screen links. A visually-hidden live region
-  announces the current slide.
+- Inactive slides are `aria-hidden`. A visually-hidden live region announces
+  the current slide.
 - Shimmer skeleton while the slides load, matching the rest of the site.
 - The two headline numbers from the old hero (**120+ webinars**, **2.5K+
   placed**) are kept as a small card row tucked under the slider. They're still
@@ -349,7 +348,36 @@ Superadmin-only, hidden from ordinary admins via the `superOnly` flag in
 admins who navigate to the URL directly get an access notice.
 
 Each row shows a desktop and a mobile thumbnail side by side, the title,
-description, position, buttons and text colour, with controls to move up/down,
+description, position and text colour, with controls to move up/down,
 hide/show, edit and delete. The add/edit modal has both image pickers with live
 previews, a "Remove" action on the mobile image to fall back to the desktop
 one, and size hints (≈1600×620 wide, ≈800×1000 tall).
+
+
+---
+
+## Hero slider — buttons removed
+
+The call-to-action buttons are gone from the slider. A slide is now just an
+image plus a title and description.
+
+Removed everywhere:
+
+- `components/Hero.tsx` — the button row under the copy, the `next/link`
+  import, the shared `btnBase` class and the two button placeholders in the
+  loading skeleton.
+- `app/admin/hero/page.tsx` — the four "Button text / Button link / Second
+  button text / Second button link" inputs in the add/edit modal, the matching
+  form state and `FormData` fields, and the button summary line on each row of
+  the slide list.
+- `models/HeroSlide.ts`, `lib/types.ts` — the `ctaLabel`, `ctaHref`,
+  `secondaryCtaLabel` and `secondaryCtaHref` fields.
+- `lib/heroDefaults.ts`, `app/api/hero-slides/route.ts`,
+  `app/api/hero-slides/[id]/route.ts`, `app/api/hero-slides/seed/route.ts` —
+  the same fields in the built-in slides and in create/update/seed handling.
+
+Slides already saved in MongoDB keep their old `ctaLabel`/`ctaHref` values as
+leftover fields. Nothing reads them any more, so they're harmless; a one-off
+`db.heroslides.updateMany({}, { $unset: { ctaLabel: "", ctaHref: "",
+secondaryCtaLabel: "", secondaryCtaHref: "" } })` clears them if you want the
+documents tidy.

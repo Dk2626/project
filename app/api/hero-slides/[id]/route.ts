@@ -50,15 +50,7 @@ export async function PUT(req: Request, { params }: Ctx) {
         if (!text("title")) return fail("Slide title is required.");
         update.title = text("title");
       }
-      for (const field of [
-        "description",
-        "ctaLabel",
-        "ctaHref",
-        "secondaryCtaLabel",
-        "secondaryCtaHref",
-      ]) {
-        if (has(field)) update[field] = text(field);
-      }
+      if (has("description")) update.description = text("description");
       if (has("textTone")) {
         update.textTone = text("textTone") === "dark" ? "dark" : "light";
       }
@@ -101,10 +93,6 @@ export async function PUT(req: Request, { params }: Ctx) {
       const allowed = [
         "title",
         "description",
-        "ctaLabel",
-        "ctaHref",
-        "secondaryCtaLabel",
-        "secondaryCtaHref",
         "textTone",
         "order",
         "active",

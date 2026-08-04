@@ -30,10 +30,6 @@ export async function POST() {
       DEFAULT_HERO_SLIDES.map((slide, index) => ({
         title: slide.title,
         description: slide.description ?? "",
-        ctaLabel: slide.ctaLabel ?? "",
-        ctaHref: slide.ctaHref ?? "",
-        secondaryCtaLabel: slide.secondaryCtaLabel ?? "",
-        secondaryCtaHref: slide.secondaryCtaHref ?? "",
         desktopImageUrl: slide.desktopImageUrl,
         desktopImageKey: "",
         mobileImageUrl: slide.mobileImageUrl ?? "",

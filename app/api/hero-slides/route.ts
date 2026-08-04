@@ -31,8 +31,7 @@ export async function GET(req: Request) {
 /**
  * POST — create a slide. Superadmin only, multipart/form-data.
  *
- * Fields: title, description, ctaLabel, ctaHref, secondaryCtaLabel,
- * secondaryCtaHref, textTone, order, active
+ * Fields: title, description, textTone, order, active
  * Files:  desktopImage (required), mobileImage (optional)
  */
 export async function POST(req: Request) {
@@ -66,10 +65,6 @@ export async function POST(req: Request) {
     const slide = await HeroSlide.create({
       title,
       description: text("description"),
-      ctaLabel: text("ctaLabel"),
-      ctaHref: text("ctaHref"),
-      secondaryCtaLabel: text("secondaryCtaLabel"),
-      secondaryCtaHref: text("secondaryCtaHref"),
       textTone: text("textTone") === "dark" ? "dark" : "light",
       desktopImageUrl: desktopUpload.url,
       desktopImageKey: desktopUpload.key,
