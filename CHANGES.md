@@ -381,3 +381,122 @@ leftover fields. Nothing reads them any more, so they're harmless; a one-off
 `db.heroslides.updateMany({}, { $unset: { ctaLabel: "", ctaHref: "",
 secondaryCtaLabel: "", secondaryCtaHref: "" } })` clears them if you want the
 documents tidy.
+
+
+---
+
+## Webinar cover images, auth-page redirects and the favicon
+
+### 1 · Cover image on a webinar (optional)
+
+`models/Webinar.ts` gains `imageUrl` + `imageKey`, both defaulting to `""` —
+the image is never required.
+
+- `lib/webinarUploads.ts` (new, server-only) — uploads to the same public
+  bucket as the hero slides (`AWS_S3_HERO_BUCKET`, falling back to
+  `AWS_S3_BUCKET`) under a `webinars/` prefix, reusing `validateImage`
+  (JPG/PNG/WebP/AVIF/GIF, 8 MB cap).
+- `lib/webinarMedia.ts` (new, client-safe) — `WEBINAR_FALLBACK_IMAGE`,
+  `webinarImage()` and `withWebinarImage()`.
+- `lib/s3.ts` — the long CDN `CacheControl` now applies to every marketing
+  folder, not just `hero/`. Resumes are still uncached.
+
+`/admin/webinars` → **Add Webinar** now has a "Cover image (optional)" picker
+with a live preview. When nothing is chosen the preview shows the placeholder
+the public site will use, and the row in the list is tagged "Default image".
+Editing keeps the current picture unless you press Replace or Remove; the old
+S3 object is deleted only after the new URL is committed, and deleting a
+webinar deletes its image too.
+
+The admin form always posts `multipart/form-data`. `POST /api/webinars` still
+accepts plain JSON as well, so any existing caller keeps working.
+
+### 2 & 3 · Fallback image everywhere
+
+`GET /api/webinars`, `GET /api/webinars/:id` and every write response now
+include **`displayImageUrl`** — the uploaded image, or
+`/placeholders/webinar.svg` when there isn't one. `imageUrl` is left exactly as
+stored so the dashboard can still tell "no image uploaded" from "image
+uploaded".
+
+`components/WebinarThumb.tsx` (new) renders the card image and swaps in the
+placeholder a second time on the client if the stored URL 404s (deleted from
+the bucket, bad link), so a card is never an empty box. It's used by the
+homepage strip, `/webinars` and — via `webinarImage()` — the admin list. The
+built-in default webinars on the homepage (the ones shown before anything is
+scheduled) now render the same placeholder instead of a bare gradient.
+
+### 4 · /login and /register while already signed in
+
+`middleware.ts` now also matches `/login`, `/register` and
+`/register/recruiter`. A visitor with a valid session cookie is redirected to
+their own landing page — `/admin` for admin and superadmin, `/recruiter` for
+recruiters, `/dashboard` for students.
+
+The middleware reads the role by base64-decoding the JWT payload *without*
+verifying the signature — that can't be done on the Edge runtime and doesn't
+need to be, since this only picks a redirect target and every protected page
+and API route still verifies properly. An expired or malformed token is
+treated as signed out, so a stale cookie can't lock anyone out of the login
+page.
+
+`components/RedirectIfAuthed.tsx` (new) is the client-side twin, used by all
+three pages, and covers client-side navigation such as the back button after
+logging in.
+
+Also fixed while in there: logging in as a **superadmin** used to land on
+`/dashboard` (which then bounced to `/admin`). Both admin tiers now go
+straight to `/admin` — the login handler shares the same `landingFor()` helper.
+
+### 5 · Favicon
+
+`app/icon.png` (512×512), `app/apple-icon.png` (180×180, white plate since iOS
+ignores transparency) and `app/favicon.ico` (16 → 256px) are generated from
+`public/logo.png`. Next.js picks these up by file convention — no change to
+`app/layout.tsx` needed — so the URAV mark shows in the browser tab, in
+bookmarks and on an iOS home screen.
+
+## Webinar images — real fallback photo + dedicated bucket (2026-08-10)
+
+**1. Fallback is a real image, not an SVG.**
+`public/placeholders/webinar.jpg` (1280×720, a flat illustration of a student
+watching a live session in the brand navy) replaces the old
+`webinar.svg`, and `WEBINAR_FALLBACK_IMAGE` in `lib/webinarMedia.ts` points
+at it. `WebinarThumb` no longer draws the video-camera icon over the
+fallback — that overlay only made sense on top of the flat SVG. The three
+built-in homepage webinars in `lib/data.ts` use the same file. To change the
+picture, drop a different 16:9 image in at that path; no code change needed.
+The editable vector source sits next to it as `webinar.source.svg` — it is not
+referenced by the app, so re-colour or re-export from it whenever you like.
+
+**2. Webinar covers upload to their own bucket.**
+`AWS_S3_HERO_BUCKET` is now used by the homepage hero slider *only*.
+`lib/webinarUploads.ts` uploads, deletes and resolves keys against
+`WEBINAR_BUCKET` (`AWS_S3_WEBINAR_BUCKET`, falling back to `AWS_S3_BUCKET`),
+with an optional `AWS_S3_WEBINAR_PUBLIC_BASE_URL` for a CDN in front of it.
+`publicBase()` in `lib/s3.ts` checks the webinar bucket before the hero one,
+so an unset env var collapsing onto the main bucket can't pick the wrong CDN
+base. Existing webinar images already in the hero bucket keep working —
+their full URL is stored in Mongo — but new uploads land in the new bucket.
+
+**3. The Add/Edit Webinar modal states the size.**
+The cover-image field now reads "Recommended size 1280 × 720 px (16:9
+landscape)" with "JPG, PNG or WebP · up to 8MB" underneath, so the admin
+knows what to prepare before picking a file.
+
+## Unused images removed + play badge back on webinar covers (2026-08-10)
+
+**1. `public/` cleaned out.** Four files were no longer referenced anywhere in
+the app and are deleted: `hero-students.jpg` (only the `.webp` is used, by
+`app/about/page.tsx` and `lib/heroDefaults.ts`), `placeholders/webinar1.jpg`,
+`placeholders/webinar.svg` and `placeholders/webinar.source.svg` (all
+superseded by the photo now sitting at `placeholders/webinar.jpg`). Everything
+still in `public/` is referenced: `hero-students.webp`, `logo.png`,
+`logo-white.png`, the four `hero/default-*.svg` slides, `placeholders/portrait.svg`
+and `placeholders/webinar.jpg`.
+
+**2. `WebinarThumb` draws the video icon again.** A centred play badge —
+`<Video className="h-10 w-10 text-white/80" />` inside a translucent circle —
+sits over the cover on every webinar card, uploaded image or fallback alike.
+The overlay is `pointer-events-none`, so clicks still reach the card link
+underneath.

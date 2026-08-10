@@ -7,6 +7,13 @@ const webinarSchema = new Schema(
     date: { type: String, required: true }, // ISO date string (yyyy-mm-dd)
     time: { type: String, required: true },
     description: { type: String, default: "" },
+    /**
+     * Optional cover image (S3). Empty when the admin didn't upload one —
+     * the UI then falls back to the built-in placeholder, so this is never
+     * required.
+     */
+    imageUrl: { type: String, default: "" },
+    imageKey: { type: String, default: "" },
     live: { type: Boolean, default: false },
     active: { type: Boolean, default: true, index: true },
   },

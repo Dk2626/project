@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { api, ApiError } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useRedirectIfAuthed, landingFor } from "@/components/RedirectIfAuthed";
 import { Logo } from "@/components/Logo";
 import type { AuthUser } from "@/lib/types";
 
@@ -32,6 +33,8 @@ function LoginForm() {
   const params = useSearchParams();
   const redirect = params.get("redirect");
   const { setUser } = useAuth();
+  // Signed-in visitors never see this form — they go to their dashboard.
+  useRedirectIfAuthed();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,10 +55,7 @@ function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
       setUser(data.user);
-      if (redirect) router.push(redirect);
-      else if (data.user.role === "admin") router.push("/admin");
-      else if (data.user.role === "recruiter") router.push("/recruiter");
-      else router.push("/dashboard");
+      router.push(redirect || landingFor(data.user.role));
       router.refresh();
     } catch (err) {
       setError(

@@ -8,7 +8,12 @@ import {
   HERO_BUCKET,
 } from "@/lib/s3";
 
-/** Folder (S3 key prefix) all hero slide images live under. */
+/**
+ * Folder (S3 key prefix) all hero slide images live under.
+ *
+ * HERO_BUCKET / AWS_S3_HERO_BUCKET is for the homepage hero slider only —
+ * webinar covers use AWS_S3_WEBINAR_BUCKET (see lib/webinarUploads.ts).
+ */
 export const HERO_FOLDER = "hero";
 
 export interface HeroImagePair {

@@ -80,6 +80,14 @@ export interface WebinarItem {
   date: string;
   time: string;
   description?: string;
+  /** Uploaded cover image. Empty when the admin didn't add one. */
+  imageUrl?: string;
+  imageKey?: string;
+  /**
+   * Always set by the webinar API — the uploaded image, or the built-in
+   * placeholder. Use this for rendering.
+   */
+  displayImageUrl?: string;
   live?: boolean;
   active?: boolean;
   createdAt?: string;

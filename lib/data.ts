@@ -46,21 +46,21 @@ export const webinars: Webinar[] = [
     time: "10:00 AM",
     speaker: "Dr. Sarah Johnson",
     live: true,
-    image: "/placeholders/webinar.svg",
+    image: "/placeholders/webinar.jpg",
   },
   {
     title: "Marketing Strategies for 2024",
     date: "May 28, 2024",
     time: "11:00 AM",
     speaker: "Michael Smith",
-    image: "/placeholders/webinar.svg",
+    image: "/placeholders/webinar.jpg",
   },
   {
     title: "Data Analytics with Python",
     date: "May 30, 2024",
     time: "02:00 PM",
     speaker: "David Brown",
-    image: "/placeholders/webinar.svg",
+    image: "/placeholders/webinar.jpg",
   },
 ];
 

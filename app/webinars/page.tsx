@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Calendar, Clock, UserRound, Video } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Badge } from "@/components/ui/Badge";
+import { WebinarThumb } from "@/components/WebinarThumb";
 import { ApplyButton } from "@/components/ApplyButton";
 import { api } from "@/lib/client";
 import { Skeleton, SkeletonCard, SkeletonText } from "@/components/ui/Skeleton";
@@ -84,15 +84,12 @@ export default function WebinarsPage() {
                   key={w._id}
                   className="flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div className="relative flex h-32 items-center justify-center bg-gradient-to-br from-primary to-primary-hover">
-                    <Video className="h-10 w-10 text-white/80" />
-                    {w.live && (
-                      <Badge tone="live" className="absolute left-3 top-3">
-                        <span className="h-1.5 w-1.5 rounded-full bg-danger" />
-                        LIVE
-                      </Badge>
-                    )}
-                  </div>
+                  <WebinarThumb
+                    src={w.displayImageUrl || w.imageUrl}
+                    alt={w.title}
+                    live={w.live}
+                    className="h-40"
+                  />
 
                   <div className="flex flex-1 flex-col p-5">
                     <h3 className="font-heading text-lg font-semibold text-dark">{w.title}</h3>

@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Video, Calendar, Clock, Eye, EyeOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Video,
+  Calendar,
+  Clock,
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+  Upload,
+} from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { SkeletonList } from "@/components/ui/Skeleton";
 import { FormInput, FormTextarea } from "@/components/ui/Form";
 import { api } from "@/lib/client";
+import { WEBINAR_FALLBACK_IMAGE, webinarImage } from "@/lib/webinarMedia";
 import type { WebinarItem } from "@/lib/types";
 
 const empty = {
@@ -30,8 +42,10 @@ export default function AdminWebinarsPage() {
   const [webinars, setWebinars] = useState<WebinarItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<WebinarItem | null>(null);
   const [form, setForm] = useState<FormState>(empty);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [dropImage, setDropImage] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -46,7 +60,9 @@ export default function AdminWebinarsPage() {
 
   function openCreate() {
     setForm(empty);
-    setEditingId(null);
+    setEditing(null);
+    setImageFile(null);
+    setDropImage(false);
     setError("");
     setOpen(true);
   }
@@ -61,7 +77,9 @@ export default function AdminWebinarsPage() {
       live: w.live ?? false,
       active: w.active ?? true,
     });
-    setEditingId(w._id);
+    setEditing(w);
+    setImageFile(null);
+    setDropImage(false);
     setError("");
     setOpen(true);
   }
@@ -72,16 +90,26 @@ export default function AdminWebinarsPage() {
       setError("Title, speaker, date and time are required.");
       return;
     }
+
+    // The image is optional, so we always send multipart — the API treats a
+    // missing `image` field as "leave the current one alone".
+    const fd = new FormData();
+    fd.append("title", form.title.trim());
+    fd.append("speaker", form.speaker.trim());
+    fd.append("date", form.date);
+    fd.append("time", form.time);
+    fd.append("description", form.description.trim());
+    fd.append("live", String(form.live));
+    fd.append("active", String(form.active));
+    if (imageFile) fd.append("image", imageFile);
+    if (dropImage && !imageFile) fd.append("removeImage", "true");
+
     setSaving(true);
     try {
-      if (editingId) {
-        await api(`/api/webinars/${editingId}`, {
-          method: "PUT",
-          body: JSON.stringify(form),
-        });
-      } else {
-        await api("/api/webinars", { method: "POST", body: JSON.stringify(form) });
-      }
+      await api(editing ? `/api/webinars/${editing._id}` : "/api/webinars", {
+        method: editing ? "PUT" : "POST",
+        body: fd,
+      });
       setOpen(false);
       load();
     } catch (e: any) {
@@ -144,9 +172,16 @@ export default function AdminWebinarsPage() {
               className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-start gap-4">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-light text-primary">
-                  <Video className="h-5 w-5" />
-                </span>
+                <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-light">
+                  <img
+                    src={webinarImage(w)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = WEBINAR_FALLBACK_IMAGE;
+                    }}
+                  />
+                </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-heading font-semibold text-dark">{w.title}</p>
@@ -169,6 +204,11 @@ export default function AdminWebinarsPage() {
                     <span className="inline-flex items-center gap-1">
                       <Clock className="h-3 w-3" /> {w.time}
                     </span>
+                    {!w.imageUrl && (
+                      <span className="inline-flex items-center gap-1">
+                        <ImageIcon className="h-3 w-3" /> Default image
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -189,7 +229,7 @@ export default function AdminWebinarsPage() {
         )}
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editingId ? "Edit Webinar" : "Add Webinar"}>
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? "Edit Webinar" : "Add Webinar"}>
         <div className="space-y-4">
           {error && <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
           <FormInput label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} required />
@@ -204,6 +244,21 @@ export default function AdminWebinarsPage() {
             onChange={(v) => setForm({ ...form, description: v })}
             placeholder="What will attendees learn?"
           />
+
+          <ImageField
+            file={imageFile}
+            existing={dropImage ? undefined : editing?.imageUrl}
+            onPick={(f) => {
+              setImageFile(f);
+              if (f) setDropImage(false);
+            }}
+            onClear={
+              editing?.imageUrl && !imageFile && !dropImage
+                ? () => setDropImage(true)
+                : undefined
+            }
+          />
+
           <div className="flex flex-wrap gap-5">
             <label className="flex items-center gap-2 text-sm text-slate-600">
               <input
@@ -237,11 +292,111 @@ export default function AdminWebinarsPage() {
               disabled={saving}
               className="h-11 rounded-md bg-primary px-6 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-60"
             >
-              {saving ? "Saving…" : editingId ? "Save changes" : "Create webinar"}
+              {saving ? "Saving…" : editing ? "Save changes" : "Create webinar"}
             </button>
           </div>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+/**
+ * Optional cover image picker with a live preview. When nothing is chosen the
+ * preview shows the placeholder the public site will use.
+ */
+function ImageField({
+  file,
+  existing,
+  onPick,
+  onClear,
+}: {
+  file: File | null;
+  existing?: string;
+  onPick: (file: File | null) => void;
+  onClear?: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // Object URLs have to be revoked or the blob stays in memory.
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const chosen = preview ?? (existing?.trim() || null);
+
+  return (
+    <div>
+      <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-700">
+        <ImageIcon className="h-4 w-4" /> Cover image
+        <span className="text-xs font-normal text-slate-400">(optional)</span>
+      </label>
+      <div className="flex items-center gap-4 rounded-md border border-dashed border-slate-300 p-3">
+        <div className="h-16 w-24 shrink-0 overflow-hidden rounded bg-light">
+          <img
+            src={chosen ?? WEBINAR_FALLBACK_IMAGE}
+            alt=""
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = WEBINAR_FALLBACK_IMAGE;
+            }}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-slate-600">
+            Recommended size 1280 × 720 px (16:9 landscape)
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            JPG, PNG or WebP · up to 8MB ·{" "}
+            {chosen
+              ? "shown on the webinar cards, so keep the subject centred."
+              : "leave this empty and the default webinar image is used on the site."}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-dark hover:bg-light"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {chosen ? "Replace" : "Choose image"}
+            </button>
+            {file && <span className="truncate text-xs text-slate-500">{file.name}</span>}
+            {file && (
+              <button
+                type="button"
+                onClick={() => onPick(null)}
+                className="text-xs font-medium text-slate-500 hover:underline"
+              >
+                Undo
+              </button>
+            )}
+            {!file && onClear && (
+              <button
+                type="button"
+                onClick={onClear}
+                className="text-xs font-medium text-danger hover:underline"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+        className="hidden"
+        onChange={(e) => onPick(e.target.files?.[0] ?? null)}
+      />
     </div>
   );
 }

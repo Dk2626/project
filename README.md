@@ -46,8 +46,10 @@ cp .env.example .env.local
 | `AWS_REGION` / `AWS_S3_BUCKET` | Your S3 bucket and its region |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | IAM credentials with `s3:PutObject` on the bucket |
 | `AWS_S3_PUBLIC_BASE_URL` | *(optional)* CDN/custom domain in front of the bucket |
-| `AWS_S3_HERO_BUCKET` | *(optional)* Separate public bucket for homepage slider images — defaults to `AWS_S3_BUCKET` |
+| `AWS_S3_HERO_BUCKET` | *(optional)* Public bucket for the homepage hero slider images **only** — defaults to `AWS_S3_BUCKET` |
 | `AWS_S3_HERO_PUBLIC_BASE_URL` | *(optional)* CDN/custom domain in front of the hero bucket |
+| `AWS_S3_WEBINAR_BUCKET` | *(optional)* Public bucket for webinar cover images — defaults to `AWS_S3_BUCKET` |
+| `AWS_S3_WEBINAR_PUBLIC_BASE_URL` | *(optional)* CDN/custom domain in front of the webinar bucket |
 | `ADMIN_SETUP_KEY` | Secret used once to create the first admin (see below) |
 
 ### S3 bucket setup (so resume links open)

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useRedirectIfAuthed } from "@/components/RedirectIfAuthed";
 import { Logo } from "@/components/Logo";
 import type { AuthUser } from "@/lib/types";
 import {
@@ -199,6 +200,8 @@ export default function RecruiterRegisterPage() {
 
   const router = useRouter();
   const { setUser } = useAuth();
+  // Signed-in visitors never see this form — they go to their dashboard.
+  useRedirectIfAuthed();
 
   const set = (key: keyof typeof form) => (v: string) =>
     setForm((f) => ({ ...f, [key]: v }));

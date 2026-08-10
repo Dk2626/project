@@ -11,14 +11,21 @@ const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
 /**
- * Hero/banner images can live in their own bucket (they are public, while
- * resumes usually are not). If AWS_S3_HERO_BUCKET isn't set we fall back to
- * the main bucket and just keep the images under the `hero/` prefix.
+ * Public marketing images live in their own buckets (they are public, while
+ * resumes usually are not), one per surface:
+ *
+ *   AWS_S3_HERO_BUCKET     — homepage hero slider images ONLY
+ *   AWS_S3_WEBINAR_BUCKET  — webinar cover images
+ *
+ * If either is unset we fall back to the main bucket and keep the images
+ * apart with their own key prefix (`hero/`, `webinars/`).
  */
 const heroBucket = process.env.AWS_S3_HERO_BUCKET || bucket;
+const webinarBucket = process.env.AWS_S3_WEBINAR_BUCKET || bucket;
 
 export const RESUME_BUCKET = bucket;
 export const HERO_BUCKET = heroBucket;
+export const WEBINAR_BUCKET = webinarBucket;
 
 let _client: S3Client | null = null;
 
@@ -44,6 +51,14 @@ export function isS3Configured(bucketName = bucket): boolean {
 
 /** Public base URL for a bucket — CDN/custom domain when one is configured. */
 function publicBase(bucketName: string): string {
+  // Checked most-specific first: when a bucket env var is left unset it
+  // collapses onto the main bucket, and the wrong CDN base would win.
+  if (
+    bucketName === webinarBucket &&
+    process.env.AWS_S3_WEBINAR_PUBLIC_BASE_URL
+  ) {
+    return process.env.AWS_S3_WEBINAR_PUBLIC_BASE_URL;
+  }
   if (bucketName === heroBucket && process.env.AWS_S3_HERO_PUBLIC_BASE_URL) {
     return process.env.AWS_S3_HERO_PUBLIC_BASE_URL;
   }
@@ -83,8 +98,12 @@ export async function uploadToS3(
       Key: key,
       Body: buffer,
       ContentType: contentType,
-      // Hero images are static marketing assets — let the CDN hold on to them.
-      CacheControl: folder === "hero" ? "public, max-age=31536000, immutable" : undefined,
+      // Marketing images (hero slides, webinar covers) are static assets —
+      // let the CDN hold on to them. Resumes are not cached.
+      CacheControl:
+        folder === "resumes"
+          ? undefined
+          : "public, max-age=31536000, immutable",
     })
   );
 

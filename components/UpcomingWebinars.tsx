@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Calendar, Clock, UserRound, Video } from "lucide-react";
+import { Calendar, Clock, UserRound } from "lucide-react";
 import { webinars as fallbackWebinars } from "@/lib/data";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { WebinarThumb } from "@/components/WebinarThumb";
 import { api } from "@/lib/client";
 import type { WebinarItem } from "@/lib/types";
 
@@ -43,15 +43,11 @@ export function UpcomingWebinars() {
                 key={w._id}
                 className="flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-primary to-primary-hover">
-                  <Video className="h-10 w-10 text-white/80" />
-                  {w.live && (
-                    <Badge tone="live" className="absolute left-3 top-3">
-                      <span className="h-1.5 w-1.5 rounded-full bg-danger" />
-                      LIVE
-                    </Badge>
-                  )}
-                </div>
+                <WebinarThumb
+                  src={w.displayImageUrl || w.imageUrl}
+                  alt={w.title}
+                  live={w.live}
+                />
                 <div className="flex flex-1 flex-col p-5">
                   <h3 className="font-heading text-lg font-semibold text-dark">{w.title}</h3>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
@@ -81,15 +77,7 @@ export function UpcomingWebinars() {
                 key={w.title}
                 className="flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-primary to-primary-hover">
-                  <Video className="h-10 w-10 text-white/80" />
-                  {w.live && (
-                    <Badge tone="live" className="absolute left-3 top-3">
-                      <span className="h-1.5 w-1.5 rounded-full bg-danger" />
-                      LIVE
-                    </Badge>
-                  )}
-                </div>
+                <WebinarThumb src={w.image} alt={w.title} live={w.live} />
                 <div className="flex flex-1 flex-col p-5">
                   <h3 className="font-heading text-lg font-semibold text-dark">{w.title}</h3>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
