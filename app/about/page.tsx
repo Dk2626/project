@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
-import { Target, Eye, HeartHandshake, Rocket, Users, Building2, GraduationCap, Award } from "lucide-react";
+import {
+  Target,
+  Eye,
+  HeartHandshake,
+  Rocket,
+  Users,
+  Building2,
+  GraduationCap,
+  Award,
+} from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/ui/Button";
 
@@ -20,22 +29,22 @@ const values = [
   {
     icon: Target,
     title: "Our Mission",
-    body: "Placeholder copy — replace later. To make quality learning and meaningful career opportunities accessible to every student and professional.",
+    body: "Our mission is to bridge the gap between education and industry by delivering high-quality career guidance, employability training, leadership development, AI-powered learning, and corporate consulting that transforms knowledge into real-world success. We are committed to creating confident individuals, skilled professionals, and future leaders through practical learning, innovation, and continuous mentorship.",
   },
   {
     icon: Eye,
     title: "Our Vision",
-    body: "Placeholder copy — replace later. A world where talent meets opportunity without barriers, powered by mentorship and real skills.",
+    body: "To become India's most trusted career development and corporate training organization, empowering students, professionals, and institutions with future-ready skills, ethical leadership, and lifelong learning to create a positive impact on society.Empowering Every Individual to Build a Successful Future.",
   },
   {
     icon: HeartHandshake,
-    title: "Our Values",
-    body: "Placeholder copy — replace later. Integrity, growth, and community — we put learners first in everything we build.",
+    title: "Core Purpose",
+    body: "To guide, train, and transform individuals into confident, skilled, and responsible professionals who create value for organizations and society.",
   },
   {
     icon: Rocket,
     title: "Our Promise",
-    body: "Placeholder copy — replace later. Practical learning, expert guidance and a clear path from your first webinar to your next role.",
+    body: "Practical learning, expert guidance and a clear path from your first webinar to your next role.",
   },
 ];
 
@@ -44,7 +53,7 @@ export default function AboutPage() {
     <PageShell
       eyebrow="About URAV"
       title="Empowering Careers. Building Futures."
-      subtitle="Placeholder intro — replace with your real story later. URAV is a corporate consulting and career platform connecting students, professionals and organizations."
+      subtitle="URAV is a corporate consulting and career platform connecting students, professionals and organizations."
     >
       {/* Story */}
       <section className="container-page py-12">
@@ -60,12 +69,13 @@ export default function AboutPage() {
           <div>
             <h2 className="h2 text-dark">Our Story</h2>
             <p className="mt-4 text-slate-600">
-              Placeholder text — replace later. URAV started with a simple idea: learning and career
-              growth should not be locked behind expensive courses or closed networks.
+              URAV started with a simple idea: learning and career growth should
+              not be locked behind expensive courses or closed networks.
             </p>
             <p className="mt-4 text-slate-600">
-              Today we bring together expert-led webinars, hands-on learning and a curated jobs board
-              so that every learner can move forward with confidence.
+              Today we bring together expert-led webinars, hands-on learning and
+              a curated jobs board so that every learner can move forward with
+              confidence.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button variant="primary" href="/webinars">
@@ -88,7 +98,9 @@ export default function AboutPage() {
                 <Icon className="h-6 w-6" />
               </span>
               <div>
-                <p className="font-heading text-2xl font-bold text-dark">{value}</p>
+                <p className="font-heading text-2xl font-bold text-dark">
+                  {value}
+                </p>
                 <p className="text-sm text-slate-500">{label}</p>
               </div>
             </div>
@@ -100,7 +112,7 @@ export default function AboutPage() {
       <section className="container-page py-12">
         <h2 className="h2 text-dark">What drives us</h2>
         <p className="mt-2 max-w-xl text-slate-600">
-          Placeholder section — swap in your real mission, vision and values.
+          Real mission, vision and values.
         </p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {values.map(({ icon: Icon, title, body }) => (
@@ -111,8 +123,12 @@ export default function AboutPage() {
               <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary-light text-primary">
                 <Icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-4 font-heading text-lg font-semibold text-dark">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+              <h3 className="mt-4 font-heading text-lg font-semibold text-dark">
+                {title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {body}
+              </p>
             </div>
           ))}
         </div>
@@ -121,15 +137,25 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="container-page pb-16">
         <div className="flex flex-col items-center gap-4 rounded-2xl bg-primary px-8 py-12 text-center">
-          <h2 className="font-heading text-2xl font-bold text-white">Ready to build your future?</h2>
+          <h2 className="font-heading text-2xl font-bold text-white">
+            Ready to build your future?
+          </h2>
           <p className="max-w-md text-primary-light/90">
             Join thousands of learners growing their careers with URAV.
           </p>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
-            <Button variant="outline" href="/register" className="border-white/30 bg-white text-primary hover:bg-white/90">
+            <Button
+              variant="outline"
+              href="/register"
+              className="border-white/30 bg-white text-primary hover:bg-white/90"
+            >
               Create an account
             </Button>
-            <Button variant="ghost" href="/services" className="text-white hover:bg-white/10">
+            <Button
+              variant="ghost"
+              href="/services"
+              className="text-white hover:bg-white/10"
+            >
               Our Services
             </Button>
           </div>

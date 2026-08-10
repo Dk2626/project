@@ -13,7 +13,6 @@ export const navLinks = [
   { label: "Webinars", href: "/webinars" },
   { label: "Jobs", href: "/jobs" },
   { label: "Consultation", href: "/consultation" },
-  { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -116,8 +115,7 @@ export const footerColumns: FooterColumn[] = [
       { label: "Services", href: "/services" },
       { label: "Webinars", href: "/webinars" },
       { label: "Jobs", href: "/jobs" },
-  { label: "Consultation", href: "/consultation" },
-      { label: "Blog", href: "/blog" },
+      { label: "Consultation", href: "/consultation" },
       { label: "Contact", href: "/contact" },
     ],
   },
@@ -127,8 +125,7 @@ export const footerColumns: FooterColumn[] = [
       { label: "Dashboard", href: "/dashboard" },
       { label: "Webinars", href: "/webinars" },
       { label: "Jobs", href: "/jobs" },
-  { label: "Consultation", href: "/consultation" },
-      { label: "Certificates", href: "/dashboard" },
+      { label: "Consultation", href: "/consultation" },
       { label: "Profile", href: "/dashboard" },
     ],
   },

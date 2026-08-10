@@ -5,12 +5,23 @@ import { ContactForm } from "@/components/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact — URAV",
-  description: "Get in touch with the URAV team. Placeholder contact details for now.",
+  description:
+    "Get in touch with the URAV team. Placeholder contact details for now.",
 };
 
 const details = [
-  { icon: Mail, label: "Email", value: "hello@urav.example", href: "mailto:hello@urav.example" },
-  { icon: Phone, label: "Phone", value: "+91 00000 00000", href: "tel:+910000000000" },
+  {
+    icon: Mail,
+    label: "Email",
+    value: "hello@urav.example",
+    href: "mailto:hello@urav.example",
+  },
+  {
+    icon: Phone,
+    label: "Phone",
+    value: "+91 00000 00000",
+    href: "tel:+910000000000",
+  },
   { icon: MapPin, label: "Office", value: "Placeholder address, City, India" },
   { icon: Clock, label: "Hours", value: "Mon – Fri, 9:00 AM – 6:00 PM" },
 ];
@@ -41,7 +52,10 @@ export default function ContactPage() {
                       {label}
                     </p>
                     {href ? (
-                      <a href={href} className="text-sm font-medium text-dark hover:text-primary">
+                      <a
+                        href={href}
+                        className="text-sm font-medium text-dark hover:text-primary"
+                      >
                         {value}
                       </a>
                     ) : (
@@ -51,11 +65,6 @@ export default function ContactPage() {
                 </li>
               ))}
             </ul>
-
-            {/* Map placeholder */}
-            <div className="mt-8 grid aspect-[16/9] place-items-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm text-slate-400">
-              Map placeholder
-            </div>
           </div>
 
           {/* Form */}
