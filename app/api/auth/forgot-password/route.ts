@@ -1,8 +1,7 @@
 import { createHash, randomBytes } from "crypto";
-import { connectDB } from "@/lib/db";
-import { User } from "@/models/User";
 import { PasswordResetToken } from "@/models/PasswordResetToken";
 import { isMailConfigured, sendMail, passwordResetEmail } from "@/lib/mail";
+import { findByEmail, normalizeEmail, isValidEmail } from "@/lib/users";
 import { ok, fail, handle } from "@/lib/api";
 
 export const runtime = "nodejs";
@@ -15,11 +14,11 @@ const RESET_TOKEN_TTL_MINUTES = 60;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 
 /**
- * The same reply goes out whether or not the address exists, so this endpoint
- * can't be used to find out who has an account here.
+ * Shown when the address isn't in the users collection. The UI keys off the
+ * 404 status to render the "not registered" panel with a Register link.
  */
-const GENERIC_REPLY =
-  "If that email is registered with us, a reset link is on its way. Check your inbox (and spam folder).";
+const NOT_REGISTERED =
+  "No account is registered with that email address. Check the spelling, or create an account first.";
 
 /** Public origin used to build the link in the email. */
 function baseUrl(req: Request): string {
@@ -32,13 +31,10 @@ function baseUrl(req: Request): string {
 export async function POST(req: Request) {
   return handle(async () => {
     const { email } = await req.json();
-    const address = String(email ?? "")
-      .toLowerCase()
-      .trim();
+    const address = normalizeEmail(email);
 
     if (!address) return fail("Enter your email address.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address))
-      return fail("Enter a valid email address.");
+    if (!isValidEmail(address)) return fail("Enter a valid email address.");
 
     // Surface a real error to the operator rather than silently doing nothing.
     if (!isMailConfigured())
@@ -47,14 +43,13 @@ export async function POST(req: Request) {
         503
       );
 
-    await connectDB();
+    // Single source of truth for email lookups — hits the unique index on
+    // `email`, and connects to Mongo for us.
+    const user = await findByEmail(address, "_id firstName lastName email");
 
-    const user = await User.findOne({ email: address }).select(
-      "_id firstName lastName email"
-    );
-
-    // Unknown address: stop here, but reply exactly as if we had sent one.
-    if (!user) return ok({ message: GENERIC_REPLY });
+    // Unknown address: tell the visitor plainly instead of pretending we sent
+    // a mail they'll never receive.
+    if (!user) return fail(NOT_REGISTERED, 404);
 
     // Someone hammering the button shouldn't get ten emails.
     const recent = await PasswordResetToken.findOne({
@@ -62,7 +57,11 @@ export async function POST(req: Request) {
       usedAt: { $exists: false },
       createdAt: { $gt: new Date(Date.now() - RESEND_COOLDOWN_MS) },
     }).lean();
-    if (recent) return ok({ message: GENERIC_REPLY });
+    if (recent)
+      return fail(
+        "A reset link was just sent to this address. Please check your inbox (and spam folder) before requesting another.",
+        429
+      );
 
     // Any older link for this account stops working the moment a new one is issued.
     await PasswordResetToken.deleteMany({ user: user._id });
@@ -97,6 +96,9 @@ export async function POST(req: Request) {
       );
     }
 
-    return ok({ message: GENERIC_REPLY });
+    return ok({
+      email: user.email,
+      message: `We've sent a password reset link to ${user.email}. Check your inbox (and spam folder).`,
+    });
   });
 }

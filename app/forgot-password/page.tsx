@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, AlertCircle, ArrowLeft, MailCheck } from "lucide-react";
+import { Mail, AlertCircle, ArrowLeft, MailCheck, UserPlus } from "lucide-react";
 import { api, ApiError } from "@/lib/client";
 import { useRedirectIfAuthed } from "@/components/RedirectIfAuthed";
 import { Logo } from "@/components/Logo";
@@ -13,12 +13,16 @@ export default function ForgotPasswordPage() {
 
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  /** Set when the API says no account uses this address (HTTP 404). */
+  const [unknownEmail, setUnknownEmail] = useState("");
   const [sent, setSent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
     setError("");
-    if (!email.trim()) {
+    setUnknownEmail("");
+    const address = email.trim();
+    if (!address) {
       setError("Enter the email address on your account.");
       return;
     }
@@ -26,15 +30,21 @@ export default function ForgotPasswordPage() {
     try {
       const data = await api<{ message: string }>("/api/auth/forgot-password", {
         method: "POST",
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: address }),
       });
       setSent(data.message);
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Could not send the reset link. Please try again."
-      );
+      // 404 = the address isn't in the users collection. That gets its own
+      // panel with a Register link rather than a red validation line.
+      if (err instanceof ApiError && err.status === 404) {
+        setUnknownEmail(err.message);
+      } else {
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not send the reset link. Please try again."
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -72,6 +82,46 @@ export default function ForgotPasswordPage() {
             <Link
               href="/login"
               className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to login
+            </Link>
+          </>
+        ) : unknownEmail ? (
+          <>
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-danger/10 text-danger">
+              <AlertCircle className="h-6 w-6" />
+            </span>
+            <h1 className="mt-4 font-heading text-2xl font-bold text-dark">
+              Email not registered
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              {unknownEmail}
+            </p>
+            <p className="mt-2 break-all rounded-lg bg-light px-3 py-2 text-sm font-medium text-dark">
+              {email.trim()}
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => setUnknownEmail("")}
+                className="h-12 w-full rounded-md bg-primary font-medium text-white shadow-md transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+              >
+                Try another email
+              </button>
+              <Link
+                href="/register"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-md border border-slate-200 font-medium text-dark transition-colors hover:bg-light"
+              >
+                <UserPlus className="h-4 w-4" />
+                Create an account
+              </Link>
+            </div>
+
+            <Link
+              href="/login"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to login

@@ -536,3 +536,59 @@ and `placeholders/webinar.jpg`.
 sits over the cover on every webinar card, uploaded image or fallback alike.
 The overlay is `pointer-events-none`, so clicks still reach the card link
 underneath.
+
+---
+
+## Forgot password — email must exist in the users collection (2026-08-11)
+
+Previously `/api/auth/forgot-password` replied with the same "if that email is
+registered, a link is on its way" message for every address, so a typo looked
+identical to a success. It now checks the users collection and says so when the
+address isn't there.
+
+**`lib/users.ts` (new) — one place for email lookups**
+
+| Helper | Use |
+|---|---|
+| `normalizeEmail(v)` | trim + lowercase, exactly how the schema stores it |
+| `isValidEmail(v)` | shared regex (was copy-pasted in four routes) |
+| `findByEmail(email, select?)` | returns the user document, or `null` |
+| `findIdByEmail(email)` | `_id` only, `.lean()` — for clash checks |
+| `emailExists(email)` | boolean wrapper |
+
+All of them call `connectDB()` themselves and normalise the address before
+querying, so `"  Ravi@Gmail.com "` and `"ravi@gmail.com"` can no longer resolve
+differently depending on which route you came in through.
+
+**Now used by:** forgot-password, login, register, `POST /api/admin/admins`,
+and the email-clash check in `PUT /api/admin/students/[id]` — every
+hand-rolled `User.findOne({ email })` is gone.
+
+**Index** — `models/User.ts`: the `email` path carries `unique: true` (which is
+itself the unique index MongoDB uses) and now an explicit `index: true`
+alongside it, so the intent is visible in the schema. Mongoose merges the two
+into a single `{ email: 1 }` unique index — no duplicate-index warning. Every
+`findByEmail()` is therefore an index seek, not a collection scan. Indexes are
+built on connect (`autoIndex` is on), so nothing to run by hand.
+
+**API responses**
+
+| Case | Status | Body |
+|---|---|---|
+| Address not in the DB | `404` | "No account is registered with that email address…" |
+| Link already sent < 60s ago | `429` | "A reset link was just sent to this address…" |
+| Sent | `200` | "We've sent a password reset link to *address*…" |
+
+**UI** — `app/forgot-password/page.tsx` reads the `404` status off `ApiError`
+and renders a dedicated **"Email not registered"** panel: the address that was
+tried, a **Try another email** button, and a **Create an account** link to
+`/register`. Other failures still show the inline red error line. The success
+screen now names the address the mail went to.
+
+**Login is deliberately unchanged** — it still returns the same
+"Invalid email or password." for an unknown address as for a wrong password.
+
+> Trade-off worth knowing: this endpoint now confirms whether an address has an
+> account, so someone could script it to test a list of addresses. The 60-second
+> per-account cooldown limits the noise; if that becomes a problem, add an
+> IP-level rate limit in `middleware.ts` for this route.

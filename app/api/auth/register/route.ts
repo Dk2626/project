@@ -8,6 +8,7 @@ import {
   AUTH_COOKIE,
 } from "@/lib/auth";
 import { uploadToS3, validatePdf, isS3Configured } from "@/lib/s3";
+import { emailExists } from "@/lib/users";
 import { ok, fail, handle } from "@/lib/api";
 
 export const runtime = "nodejs";
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
 
     await connectDB();
 
-    const existing = await User.findOne({ email }).lean();
+    const existing = await emailExists(email);
     if (existing)
       return fail(
         "An account with this email already exists. Try logging in.",

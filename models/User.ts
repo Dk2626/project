@@ -9,10 +9,17 @@ const userSchema = new Schema(
   {
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
+    /**
+     * Always stored lowercase + trimmed. `unique: true` builds a unique
+     * B-tree index on this path, which is what makes `findByEmail()` an
+     * index seek instead of a collection scan — login, registration and the
+     * forgot-password lookup all go through it.
+     */
     email: {
       type: String,
       required: true,
       unique: true,
+      index: true,
       lowercase: true,
       trim: true,
     },

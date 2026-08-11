@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
-import { connectDB } from "@/lib/db";
-import { User } from "@/models/User";
+import { findByEmail } from "@/lib/users";
 import {
   verifyPassword,
   signToken,
@@ -18,12 +17,10 @@ export async function POST(req: Request) {
     if (!email || !password)
       return fail("Email and password are required.");
 
-    await connectDB();
-
     // password has select:false, so ask for it explicitly.
-    const user = await User.findOne({ email: String(email).toLowerCase().trim() }).select(
-      "+password"
-    );
+    const user = await findByEmail(email, "+password");
+    // Deliberately the same message as a wrong password: the login form must
+    // not reveal which addresses have accounts.
     if (!user) return fail("Invalid email or password.", 401);
 
     const valid = await verifyPassword(password, user.password);

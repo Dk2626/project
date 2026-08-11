@@ -2,6 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { Application } from "@/models/Application";
+import { findIdByEmail } from "@/lib/users";
 import {
   ok,
   fail,
@@ -94,9 +95,7 @@ export async function PUT(req: Request, { params }: Ctx) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         return fail("Please enter a valid email address.");
 
-      const clash: any = await User.findOne({ email })
-        .select("_id")
-        .lean();
+      const clash = await findIdByEmail(email);
       if (clash && String(clash._id) !== params.id)
         return fail("Another account already uses that email address.", 409);
 

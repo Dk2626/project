@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { hashPassword } from "@/lib/auth";
+import { emailExists } from "@/lib/users";
 import {
   ok,
   fail,
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
 
     await connectDB();
 
-    const existing = await User.findOne({ email }).select("_id").lean();
+    const existing = await emailExists(email);
     if (existing)
       return fail("An account with that email already exists.", 409);
 
