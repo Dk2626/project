@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** How long a reset link stays valid. */
-export const RESET_TOKEN_TTL_MINUTES = 60;
+const RESET_TOKEN_TTL_MINUTES = 60;
 
 /** Don't send a second email within this window (stops inbox flooding). */
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -32,7 +32,9 @@ function baseUrl(req: Request): string {
 export async function POST(req: Request) {
   return handle(async () => {
     const { email } = await req.json();
-    const address = String(email ?? "").toLowerCase().trim();
+    const address = String(email ?? "")
+      .toLowerCase()
+      .trim();
 
     if (!address) return fail("Enter your email address.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address))
