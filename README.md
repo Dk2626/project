@@ -51,6 +51,10 @@ cp .env.example .env.local
 | `AWS_S3_WEBINAR_BUCKET` | *(optional)* Public bucket for webinar cover images — defaults to `AWS_S3_BUCKET` |
 | `AWS_S3_WEBINAR_PUBLIC_BASE_URL` | *(optional)* CDN/custom domain in front of the webinar bucket |
 | `ADMIN_SETUP_KEY` | Secret used once to create the first admin (see below) |
+| `APP_URL` | Public site URL used to build password-reset links, e.g. `https://uravctc.com` |
+| `SMTP_HOST` / `SMTP_PORT` | Mail server, e.g. `smtp.gmail.com` / `587` |
+| `SMTP_USER` / `SMTP_PASS` | Mailbox login — for Gmail this is an **app password**, not the account password |
+| `MAIL_FROM` | *(optional)* From header, e.g. `URAV <no-reply@uravctc.com>` — defaults to `SMTP_USER` |
 
 ### S3 bucket setup (so resume links open)
 

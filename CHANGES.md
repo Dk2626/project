@@ -484,6 +484,42 @@ The cover-image field now reads "Recommended size 1280 × 720 px (16:9
 landscape)" with "JPG, PNG or WebP · up to 8MB" underneath, so the admin
 knows what to prepare before picking a file.
 
+## Forgot password via email (nodemailer) (2026-08-11)
+
+**1. Two new pages.** `/forgot-password` takes an email address and `/reset-password?token=…`
+takes the new password. Both sit on the same white card as the login form and
+both are in the middleware's `AUTH_PAGES` list, so someone already signed in is
+bounced to their own dashboard instead.
+
+**2. `lib/mail.ts` — the nodemailer transport.** One shared, lazily created
+transporter reading `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` and `SMTP_PASS`
+(port 465 uses implicit TLS, anything else STARTTLS), plus the branded HTML +
+plain-text reset template in URAV navy. `isMailConfigured()` lets the API route
+return a clear 503 when SMTP hasn't been filled in yet, rather than the request
+hanging or failing obscurely.
+
+**3. `models/PasswordResetToken.ts`.** A 32-byte random token goes out in the
+email; only its SHA-256 hash is stored, so a database dump can't be used to
+take over accounts. A TTL index on `expiresAt` has Mongo delete each row the
+moment it expires — nothing to sweep. Links last 60 minutes, work once
+(`usedAt`), and issuing a new one deletes every earlier link for that account.
+
+**4. `POST /api/auth/forgot-password`.** Replies with the same message whether
+or not the address is registered, so the endpoint can't be used to discover who
+has an account. A 60-second cooldown per user stops repeated clicks from
+flooding an inbox, and if the send throws, the token row is deleted again so no
+live link is left behind for an email that never arrived.
+
+**5. `/api/auth/reset-password`.** `GET ?token=` validates the link when the page
+opens, so a dead link says so up front instead of after the password has been
+typed twice. `POST { token, password }` enforces the same 8-character minimum as
+registration, re-hashes with the existing `hashPassword`, marks the token spent,
+clears the rest, and deletes the auth cookie so the next sign-in uses the new
+password.
+
+**6. Login page.** A "Forgot password?" link now sits on the right of the
+Password label.
+
 ## Unused images removed + play badge back on webinar covers (2026-08-10)
 
 **1. `public/` cleaned out.** Four files were no longer referenced anywhere in

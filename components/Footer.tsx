@@ -40,7 +40,9 @@ export function Footer() {
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
               <Logo size={34} variant="white" />
-              <span className="font-heading text-xl font-bold text-white">URAV</span>
+              <span className="font-heading text-xl font-bold text-white">
+                URAV
+              </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-slate-400">
               Empowering careers and organizations through learning, consulting
@@ -85,7 +87,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t border-white/10 pt-6 text-center text-sm text-slate-500">
-          © 2024 URAV. All rights reserved.
+          © {new Date().getFullYear()} URAV. All rights reserved.
         </div>
       </div>
     </footer>

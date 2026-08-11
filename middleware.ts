@@ -10,7 +10,7 @@ import { AUTH_COOKIE } from "@/lib/constants";
 const PROTECTED = ["/dashboard", "/admin", "/recruiter"];
 
 /** Pages that make no sense once you are signed in. */
-const AUTH_PAGES = ["/login", "/register"];
+const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 /**
  * Read the payload of the JWT *without* verifying it.
@@ -80,5 +80,7 @@ export const config = {
     "/login",
     "/register/:path*",
     "/register",
+    "/forgot-password",
+    "/reset-password",
   ],
 };
