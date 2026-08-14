@@ -592,3 +592,69 @@ screen now names the address the mail went to.
 > account, so someone could script it to test a list of addresses. The 60-second
 > per-account cooldown limits the noise; if that becomes a problem, add an
 > IP-level rate limit in `middleware.ts` for this route.
+
+---
+
+## Serving uploads through CloudFront (`HERO_URL` / `WEBINAR_URL` / `RESUME_URL`)
+
+**The problem with the URL in the database.** Every upload saves two things:
+the S3 object **key** and the public **URL** it had at upload time. The key is
+stable; the URL is not. Putting the buckets behind CloudFront changes the URL
+for every row already written, so rewriting only the upload path would leave
+every existing hero slide, webinar cover and CV still hitting S3 directly.
+
+**So the URL is now derived, not trusted.** It is rebuilt as
+`<CloudFront base>/<key>` on the way out of the API, and the stored URL is only
+a fallback. Nothing has to be migrated in MongoDB.
+
+**`lib/cdn.ts` (new)** — pure string helpers, no aws-sdk or mongoose:
+
+| Export | Purpose |
+|---|---|
+| `cdnBase(surface)` | Normalised base for `"hero" \| "webinar" \| "resume"`. Accepts a bare domain (adds `https://`) and trims a trailing slash, so the value pasted from the AWS console works as-is. Returns `null` when unset. |
+| `keyFromStoredUrl(url)` | Recovers the key from a virtual-hosted S3 URL, a path-style one (`s3.<region>.amazonaws.com/<bucket>/<key>`) or an existing CloudFront URL. Returns `null` for `/public` paths. |
+| `cdnUrl(surface, key, storedUrl)` | The URL to serve. Key wins → key parsed out of the stored URL → stored URL untouched. |
+
+Env, newest name first — `AWS_S3_PUBLIC_BASE_URL`,
+`AWS_S3_HERO_PUBLIC_BASE_URL` and `AWS_S3_WEBINAR_PUBLIC_BASE_URL` still work
+as fallbacks:
+
+```
+HERO_URL=https://d111111abcdef8.cloudfront.net
+WEBINAR_URL=https://d222222abcdef8.cloudfront.net
+RESUME_URL=https://d333333abcdef8.cloudfront.net
+```
+
+**`lib/api.ts` — one rewrite point.** `serialize()` already runs on every
+document leaving every route, so the mapping lives there rather than in ~15
+handlers:
+
+| Field | Key field | Surface |
+|---|---|---|
+| `desktopImageUrl` | `desktopImageKey` | hero |
+| `mobileImageUrl` | `mobileImageKey` | hero |
+| `imageUrl` | `imageKey` | webinar |
+| `resumeUrl` | `resumeKey` | resume |
+
+Because `serialize()` recurses, populated sub-documents are covered too — the
+`user` on a consultation, the applicant on an application. `Application.resumeUrl`
+is a snapshot with no key of its own, so it resolves through the URL parser.
+`withWebinarImage()` runs *after* `serialize()`, so `displayImageUrl` inherits
+the rewritten value and the `/public` placeholder is still used when there is
+no upload.
+
+**`lib/s3.ts`** — `publicBase()` now reads the same bases, so newly written
+rows also store the CloudFront URL; and `keyFromUrl()` (used to delete the
+replaced file) delegates to `keyFromStoredUrl()`, so deletes work whether the
+row was written before or after the switch.
+
+**Unchanged by design:** the default hero slides and the webinar placeholder
+live in `/public` and are never rewritten — a stored URL starting with `/` is
+returned as-is.
+
+> Two things to check on the AWS side: each distribution's origin must point at
+> the **bucket root** (an origin path would be dropped, since the key is
+> appended to the domain directly), and `RESUME_URL` fronts a bucket of private
+> CVs — that distribution needs OAC plus a bucket policy allowing only it, or
+> the PDFs are public to anyone with the link, exactly as they were on the raw
+> S3 URL.

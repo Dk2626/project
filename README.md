@@ -45,22 +45,46 @@ cp .env.example .env.local
 | `JWT_SECRET` | Long random string for signing sessions — `openssl rand -base64 48` |
 | `AWS_REGION` / `AWS_S3_BUCKET` | Your S3 bucket and its region |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | IAM credentials with `s3:PutObject` on the bucket |
-| `AWS_S3_PUBLIC_BASE_URL` | *(optional)* CDN/custom domain in front of the bucket |
+| `HERO_URL` | *(optional)* CloudFront domain in front of the hero bucket |
+| `WEBINAR_URL` | *(optional)* CloudFront domain in front of the webinar bucket |
+| `RESUME_URL` | *(optional)* CloudFront domain in front of the resume (main) bucket |
 | `AWS_S3_HERO_BUCKET` | *(optional)* Public bucket for the homepage hero slider images **only** — defaults to `AWS_S3_BUCKET` |
-| `AWS_S3_HERO_PUBLIC_BASE_URL` | *(optional)* CDN/custom domain in front of the hero bucket |
 | `AWS_S3_WEBINAR_BUCKET` | *(optional)* Public bucket for webinar cover images — defaults to `AWS_S3_BUCKET` |
-| `AWS_S3_WEBINAR_PUBLIC_BASE_URL` | *(optional)* CDN/custom domain in front of the webinar bucket |
 | `ADMIN_SETUP_KEY` | Secret used once to create the first admin (see below) |
 | `APP_URL` | Public site URL used to build password-reset links, e.g. `https://uravctc.com` |
 | `SMTP_HOST` / `SMTP_PORT` | Mail server, e.g. `smtp.gmail.com` / `587` |
 | `SMTP_USER` / `SMTP_PASS` | Mailbox login — for Gmail this is an **app password**, not the account password |
 | `MAIL_FROM` | *(optional)* From header, e.g. `URAV <no-reply@uravctc.com>` — defaults to `SMTP_USER` |
 
+
+### CloudFront
+
+`HERO_URL`, `WEBINAR_URL` and `RESUME_URL` take the distribution domain for each
+bucket, with or without the scheme and with or without a trailing slash:
+
+```
+HERO_URL=https://d111111abcdef8.cloudfront.net
+WEBINAR_URL=https://d222222abcdef8.cloudfront.net
+RESUME_URL=https://d333333abcdef8.cloudfront.net
+```
+
+File URLs are **rebuilt from the object key on every read**, so setting these
+switches existing hero slides, webinar covers and CVs over to CloudFront with no
+database migration — the S3 URL saved in MongoDB is only a fallback. Leaving a
+variable empty keeps that surface on the direct S3 URL.
+
+The distribution's origin must point at the bucket root (no origin path), since
+the stored key is appended to the domain as-is.
+
+The older `AWS_S3_PUBLIC_BASE_URL`, `AWS_S3_HERO_PUBLIC_BASE_URL` and
+`AWS_S3_WEBINAR_PUBLIC_BASE_URL` names still work as fallbacks if they are
+already set somewhere.
+
 ### S3 bucket setup (so resume links open)
 
 Resumes are uploaded with their `Content-Type`. To let the stored URLs open in a
 browser, either make objects public-readable via a bucket policy, or serve them
-through CloudFront and set `AWS_S3_PUBLIC_BASE_URL`. A minimal read policy for the
+through CloudFront and set `RESUME_URL`. A minimal read policy for the
 `resumes/` prefix:
 
 ```json

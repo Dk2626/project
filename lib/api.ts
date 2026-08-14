@@ -1,5 +1,22 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, type SessionUser } from "./auth";
+import { cdnUrl, type MediaSurface } from "./cdn";
+
+/**
+ * Stored-URL fields that get rebuilt from their object key + the CloudFront
+ * base (HERO_URL / WEBINAR_URL / RESUME_URL) on the way out of the API.
+ *
+ * Doing it here rather than in each route means every caller — hero slides,
+ * webinars, student lists, applications, populated consultation users — is
+ * covered by one rule, including rows written before CloudFront was set up.
+ */
+const CDN_FIELDS: Record<string, { surface: MediaSurface; keyField: string }> =
+  {
+    desktopImageUrl: { surface: "hero", keyField: "desktopImageKey" },
+    mobileImageUrl: { surface: "hero", keyField: "mobileImageKey" },
+    imageUrl: { surface: "webinar", keyField: "imageKey" },
+    resumeUrl: { surface: "resume", keyField: "resumeKey" },
+  };
 
 export function ok<T>(data: T, init?: number) {
   return NextResponse.json({ ok: true, data }, { status: init ?? 200 });
@@ -32,6 +49,17 @@ export function serialize<T extends Record<string, any>>(doc: T): any {
       obj[key] = serialize(val);
     }
   }
+
+  // Point every stored file URL at CloudFront. The key in the same document
+  // wins; when there isn't one (older resumes, application snapshots) the key
+  // is read back out of the stored S3 URL.
+  for (const [field, { surface, keyField }] of Object.entries(CDN_FIELDS)) {
+    const value = obj[field];
+    if (typeof value !== "string" || !value) continue;
+    const key = typeof obj[keyField] === "string" ? obj[keyField] : null;
+    obj[field] = cdnUrl(surface, key, value);
+  }
+
   return obj;
 }
 

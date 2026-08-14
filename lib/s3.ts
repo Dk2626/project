@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
+import { cdnBase, keyFromStoredUrl } from "./cdn";
 
 const region = process.env.AWS_REGION;
 const bucket = process.env.AWS_S3_BUCKET;
@@ -49,21 +50,28 @@ export function isS3Configured(bucketName = bucket): boolean {
   return Boolean(region && bucketName && accessKeyId && secretAccessKey);
 }
 
-/** Public base URL for a bucket — CDN/custom domain when one is configured. */
+/**
+ * Public base URL for a bucket — the CloudFront distribution when one is
+ * configured (WEBINAR_URL / HERO_URL / RESUME_URL, see lib/cdn.ts).
+ *
+ * This only decides what gets *written* into MongoDB on a fresh upload. What
+ * gets *served* is rebuilt from the key at serialize time, so an existing
+ * row is never left pointing at the raw S3 domain.
+ */
 function publicBase(bucketName: string): string {
   // Checked most-specific first: when a bucket env var is left unset it
   // collapses onto the main bucket, and the wrong CDN base would win.
-  if (
-    bucketName === webinarBucket &&
-    process.env.AWS_S3_WEBINAR_PUBLIC_BASE_URL
-  ) {
-    return process.env.AWS_S3_WEBINAR_PUBLIC_BASE_URL;
+  if (bucketName === webinarBucket) {
+    const base = cdnBase("webinar");
+    if (base) return base;
   }
-  if (bucketName === heroBucket && process.env.AWS_S3_HERO_PUBLIC_BASE_URL) {
-    return process.env.AWS_S3_HERO_PUBLIC_BASE_URL;
+  if (bucketName === heroBucket) {
+    const base = cdnBase("hero");
+    if (base) return base;
   }
-  if (bucketName === bucket && process.env.AWS_S3_PUBLIC_BASE_URL) {
-    return process.env.AWS_S3_PUBLIC_BASE_URL;
+  if (bucketName === bucket) {
+    const base = cdnBase("resume");
+    if (base) return base;
   }
   return `https://${bucketName}.s3.${region}.amazonaws.com`;
 }
@@ -171,19 +179,17 @@ export function keyFromUrl(
   if (!url) return null;
   // Slides seeded with the built-in defaults point at /public, not at S3.
   if (url.startsWith("/")) return null;
-  try {
-    const parsed = new URL(url);
-    const path = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
-    if (!path) return null;
 
-    // Path-style URL: https://s3.<region>.amazonaws.com/<bucket>/<key>
-    if (bucketName && path.startsWith(`${bucketName}/`)) {
-      return path.slice(bucketName.length + 1);
-    }
-    return path;
-  } catch {
-    return null;
+  // Shared with the read path, so a URL saved before CloudFront and one saved
+  // after it both resolve to the same key — deletes keep working either way.
+  const key = keyFromStoredUrl(url);
+  if (!key) return null;
+
+  // Path-style URL: https://s3.<region>.amazonaws.com/<bucket>/<key>
+  if (bucketName && key.startsWith(`${bucketName}/`)) {
+    return key.slice(bucketName.length + 1);
   }
+  return key;
 }
 
 /**
